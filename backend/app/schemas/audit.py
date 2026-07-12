@@ -8,13 +8,11 @@ class AuditCycleCreate(BaseModel):
     location: str | None = None
     start_date: date
     end_date: date
-    # Optional because the router injects current_user.id
     created_by: int | None = None
     auditor_ids: list[int] = Field(default_factory=list)
 
 
 class AuditItemVerify(BaseModel):
-    # Optional because the router injects current_user.id
     verified_by: int | None = None
     verification_status: AuditItemStatus
     remarks: str | None = None

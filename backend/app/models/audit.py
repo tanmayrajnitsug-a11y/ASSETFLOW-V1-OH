@@ -1,6 +1,3 @@
-# TODO: AuditCycle + AuditItem models – structured verification cycles
-
-
 import enum
 from datetime import date, datetime
 
@@ -15,12 +12,12 @@ audit_cycle_auditors = Table(
     Base.metadata,
     Column(
         "audit_cycle_id",
-        ForeignKey("audit_cycles.id"),
+        ForeignKey("audit_cycles.id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column(
         "user_id",
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
     ),
 )
@@ -84,17 +81,20 @@ class AuditCycle(Base):
     creator = relationship(
         "User",
         foreign_keys=[created_by],
+        lazy="selectin",
     )
 
     auditors = relationship(
         "User",
         secondary=audit_cycle_auditors,
+        lazy="selectin",
     )
 
     items = relationship(
         "AuditItem",
         back_populates="cycle",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -107,7 +107,7 @@ class AuditItem(Base):
     )
 
     audit_cycle_id: Mapped[int] = mapped_column(
-        ForeignKey("audit_cycles.id"),
+        ForeignKey("audit_cycles.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -139,14 +139,17 @@ class AuditItem(Base):
     cycle = relationship(
         "AuditCycle",
         back_populates="items",
+        lazy="selectin",
     )
 
     asset = relationship(
         "Asset",
         foreign_keys=[asset_id],
+        lazy="selectin",
     )
 
     verifier = relationship(
         "User",
         foreign_keys=[verified_by],
+        lazy="selectin",
     )
