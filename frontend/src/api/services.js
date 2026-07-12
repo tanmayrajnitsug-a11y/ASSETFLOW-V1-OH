@@ -16,67 +16,6 @@ const DUMMY_USER = {
   organization: 'AssetFlow Corp',
 };
 
-const DUMMY_DEPARTMENTS = [
-  { id: 1, name: 'Engineering',  head: 'Rohan Verma',   employees: 24, assets: 48, location: 'HQ Floor 2', status: 'Active' },
-  { id: 2, name: 'Design',       head: 'Meera Nair',    employees: 8,  assets: 16, location: 'HQ Floor 3', status: 'Active' },
-  { id: 3, name: 'Sales',        head: 'Arjun Dev',     employees: 15, assets: 22, location: 'HQ Floor 1', status: 'Active' },
-  { id: 4, name: 'Finance',      head: 'Kavita Rao',    employees: 6,  assets: 12, location: 'HQ Floor 1', status: 'Active' },
-  { id: 5, name: 'Facilities',   head: 'Suresh Patel',  employees: 10, assets: 35, location: 'Warehouse',  status: 'Active' },
-];
-
-const DUMMY_EMPLOYEES = [
-  { id: 1, name: 'Rohan Verma',  email: 'rohan@assetflow.io',  department: 'Engineering', role: 'Team Lead',      assets: 3, status: 'Active' },
-  { id: 2, name: 'Meera Nair',   email: 'meera@assetflow.io',  department: 'Design',       role: 'Sr. Designer',  assets: 2, status: 'Active' },
-  { id: 3, name: 'Arjun Dev',    email: 'arjun@assetflow.io',  department: 'Sales',        role: 'Sales Manager', assets: 2, status: 'Active' },
-  { id: 4, name: 'Priya Shah',   email: 'priya@assetflow.io',  department: 'Engineering', role: 'Full Stack Dev', assets: 1, status: 'Active' },
-  { id: 5, name: 'Kavita Rao',   email: 'kavita@assetflow.io', department: 'Finance',      role: 'CFO',           assets: 1, status: 'Active' },
-  { id: 6, name: 'Suresh Patel', email: 'suresh@assetflow.io', department: 'Facilities',   role: 'Facilities Head', assets: 4, status: 'Active' },
-];
-
-const DUMMY_ASSETS = [
-  { id: 'AF-0191', name: 'Dell Laptop',          category: 'IT Equipment',  status: 'Available',   location: 'HQ Floor 2', assignedTo: null,         purchaseDate: '2024-01-15', value: 1200 },
-  { id: 'AF-0192', name: 'MacBook Pro 14"',      category: 'IT Equipment',  status: 'Allocated',   location: 'Engineering', assignedTo: 'Priya Shah',  purchaseDate: '2024-03-02', value: 2499 },
-  { id: 'AF-0193', name: 'Office Chair',         category: 'Furniture',     status: 'Available',   location: 'Warehouse',   assignedTo: null,          purchaseDate: '2023-11-10', value: 420 },
-  { id: 'AF-0194', name: 'Canon Projector',      category: 'AV Equipment',  status: 'Maintenance', location: 'Conf Room A', assignedTo: null,          purchaseDate: '2023-06-20', value: 800 },
-  { id: 'AF-0195', name: 'iPhone 15 Pro',        category: 'Mobile Devices',status: 'Allocated',   location: 'Sales Dept',  assignedTo: 'Arjun Dev',   purchaseDate: '2024-05-01', value: 1099 },
-  { id: 'AF-0196', name: 'HP Printer XL',        category: 'IT Equipment',  status: 'Retired',     location: 'Storage',     assignedTo: null,          purchaseDate: '2021-03-14', value: 350 },
-  { id: 'AF-0197', name: 'Standing Desk',        category: 'Furniture',     status: 'Available',   location: 'HQ Floor 3',  assignedTo: null,          purchaseDate: '2024-02-28', value: 650 },
-  { id: 'AF-0198', name: 'Sony Headphones',      category: 'AV Equipment',  status: 'Allocated',   location: 'Design Dept', assignedTo: 'Meera Nair',  purchaseDate: '2024-04-10', value: 280 },
-  { id: 'AF-0199', name: '4K Monitor 32"',       category: 'IT Equipment',  status: 'Available',   location: 'HQ Floor 2',  assignedTo: null,          purchaseDate: '2024-01-22', value: 750 },
-  { id: 'AF-0200', name: 'UPS Battery Backup',   category: 'IT Equipment',  status: 'Available',   location: 'Server Room', assignedTo: null,          purchaseDate: '2023-09-05', value: 195 },
-];
-
-const DUMMY_ALLOCATIONS = [
-  { id: 'AL-001', asset: 'MacBook Pro 14"', assetId: 'AF-0192', employee: 'Priya Shah',  department: 'Engineering', allocatedOn: '2024-03-02', status: 'Active',   notes: 'Primary work machine' },
-  { id: 'AL-002', asset: 'iPhone 15 Pro',   assetId: 'AF-0195', employee: 'Arjun Dev',   department: 'Sales',       allocatedOn: '2024-05-01', status: 'Active',   notes: 'For client meetings' },
-  { id: 'AL-003', asset: 'Sony Headphones', assetId: 'AF-0198', employee: 'Meera Nair',  department: 'Design',      allocatedOn: '2024-04-10', status: 'Active',   notes: '' },
-  { id: 'AL-004', asset: 'Dell Laptop',     assetId: 'AF-0191', employee: 'Rohan Verma', department: 'Engineering', allocatedOn: '2024-01-15', status: 'Returned', notes: 'Returned for upgrade' },
-];
-
-const DUMMY_BOOKINGS = [
-  { id: 'BK-001', resource: 'Conference Room A', bookedBy: 'Priya Shah',  department: 'Engineering', date: '2026-07-14', startTime: '10:00', endTime: '11:00', status: 'Confirmed', purpose: 'Sprint Planning' },
-  { id: 'BK-002', resource: 'Projector Unit 1',  bookedBy: 'Arjun Dev',   department: 'Sales',       date: '2026-07-14', startTime: '14:00', endTime: '15:30', status: 'Confirmed', purpose: 'Client demo' },
-  { id: 'BK-003', resource: 'Conference Room B', bookedBy: 'Meera Nair',  department: 'Design',      date: '2026-07-15', startTime: '09:00', endTime: '10:30', status: 'Pending',   purpose: 'Design Review' },
-  { id: 'BK-004', resource: 'Training Room',     bookedBy: 'Suresh Patel',department: 'Facilities',  date: '2026-07-16', startTime: '13:00', endTime: '17:00', status: 'Confirmed', purpose: 'Safety Orientation' },
-  { id: 'BK-005', resource: 'Conference Room A', bookedBy: 'Kavita Rao',  department: 'Finance',     date: '2026-07-17', startTime: '11:00', endTime: '12:00', status: 'Cancelled', purpose: 'Budget Review' },
-];
-
-const DUMMY_MAINTENANCE = [
-  { id: 'MN-0001', asset: 'Canon Projector', assetId: 'AF-0194', type: 'Repair',    priority: 'High',   assignedTo: 'Tech Team',  reportedBy: 'Arjun Dev',   reportedOn: '2026-07-10', status: 'In Progress', description: 'Lamp replacement needed' },
-  { id: 'MN-0002', asset: 'HP Printer XL',   assetId: 'AF-0196', type: 'Routine',   priority: 'Low',    assignedTo: 'Suresh Patel', reportedBy: 'Kavita Rao', reportedOn: '2026-07-08', status: 'Pending',     description: 'Monthly maintenance check' },
-  { id: 'MN-0003', asset: 'Dell Laptop',      assetId: 'AF-0191', type: 'Repair',    priority: 'Medium', assignedTo: 'IT Support',  reportedBy: 'Rohan Verma', reportedOn: '2026-07-11', status: 'Approved',    description: 'Keyboard keys sticking' },
-  { id: 'MN-0004', asset: 'UPS Battery',      assetId: 'AF-0200', type: 'Inspection',priority: 'Medium', assignedTo: 'Tech Team',   reportedBy: 'Suresh Patel',reportedOn: '2026-07-05', status: 'Resolved',   description: 'Annual battery inspection' },
-  { id: 'MN-0005', asset: '4K Monitor 32"',   assetId: 'AF-0199', type: 'Repair',    priority: 'High',   assignedTo: 'IT Support',  reportedBy: 'Priya Shah',  reportedOn: '2026-07-12', status: 'Pending',    description: 'Display flickering' },
-];
-
-const DUMMY_AUDIT_LOGS = [
-  { id: 'AUD-001', asset: 'MacBook Pro 14"', assetId: 'AF-0192', action: 'Allocation',          performedBy: 'Admin',      timestamp: '2026-07-11T09:30:00', details: 'Allocated to Priya Shah',               verified: true  },
-  { id: 'AUD-002', asset: 'Canon Projector', assetId: 'AF-0194', action: 'Maintenance Request', performedBy: 'Arjun Dev',   timestamp: '2026-07-10T14:15:00', details: 'Submitted maintenance ticket MN-0001',  verified: true  },
-  { id: 'AUD-003', asset: 'HP Printer XL',   assetId: 'AF-0196', action: 'Status Change',       performedBy: 'Admin',      timestamp: '2026-07-09T11:00:00', details: 'Status changed Active → Retired',       verified: false },
-  { id: 'AUD-004', asset: 'iPhone 15 Pro',   assetId: 'AF-0195', action: 'Transfer',            performedBy: 'Rohan Verma',timestamp: '2026-07-08T16:45:00', details: 'Transferred Engineering → Sales',       verified: true  },
-  { id: 'AUD-005', asset: 'Standing Desk',   assetId: 'AF-0197', action: 'Registration',        performedBy: 'Admin',      timestamp: '2026-07-07T10:00:00', details: 'New asset registered in system',         verified: true  },
-];
-
 const DUMMY_NOTIFICATIONS = [
   { id: 1, type: 'alert',    title: 'Maintenance Overdue',  message: 'Canon Projector maintenance is overdue by 2 days.',  time: '2 min ago',  read: false },
   { id: 2, type: 'approval', title: 'Allocation Approved',  message: 'Allocation request AL-003 approved by admin.',       time: '18 min ago', read: false },
@@ -84,39 +23,6 @@ const DUMMY_NOTIFICATIONS = [
   { id: 4, type: 'transfer', title: 'Transfer Request',     message: 'AF-0033 transfer to Facilities dept pending approval.', time: '1 hr ago',read: true  },
   { id: 5, type: 'info',     title: 'Audit Cycle Started',  message: 'Q3 2026 Audit cycle initiated. 3 assets need verification.', time: '3 hr ago', read: true },
 ];
-
-const DUMMY_DASHBOARD = {
-  stats: {
-    available_assets:   128,
-    allocated_assets:   94,
-    maintenance_today:  8,
-    active_bookings:    4,
-    pending_transfers:  3,
-    upcoming_returns:   11,
-  },
-  recent_activity: [
-    { id: 1, action: 'Laptop AF-0191 allocated to Priya Shah',          time: '27 min ago', type: 'allocation'  },
-    { id: 2, action: 'Booking confirmed — 3:00–4:00 PM, Conf Room B',   time: '1 hr ago',   type: 'booking'     },
-    { id: 3, action: 'Maintenance ticket raised for Canon Projector',   time: '2 hr ago',   type: 'maintenance' },
-    { id: 4, action: 'Transfer approved — AF-0033 to Facilities dept',  time: '4 hr ago',   type: 'transfer'    },
-    { id: 5, action: 'Audit discrepancy flagged — AF-0009 corrupted',   time: '6 hr ago',   type: 'audit'       },
-  ],
-  categoryBreakdown: [
-    { label: 'IT Equipment',   value: 54, color: '#67D5FF' },
-    { label: 'Furniture',      value: 28, color: '#4CB9E7' },
-    { label: 'AV Equipment',   value: 22, color: '#22C55E' },
-    { label: 'Mobile Devices', value: 14, color: '#F59E0B' },
-    { label: 'Other',          value: 10, color: '#7C8798' },
-  ],
-  maintenanceTrend: [
-    { month: 'Feb', tickets: 3 },
-    { month: 'Mar', tickets: 7 },
-    { month: 'Apr', tickets: 4 },
-    { month: 'May', tickets: 9 },
-    { month: 'Jun', tickets: 5 },
-    { month: 'Jul', tickets: 8 },
-  ],
-};
 
 // ══════════════════════════════════════════════════════════════════
 // HELPER — try real API, fall back to dummy on network/server error
@@ -139,10 +45,6 @@ async function tryApi(apiFn, fallbackFn) {
 // AUTH SERVICES
 // ══════════════════════════════════════════════════════════════════
 export const authService = {
-  /**
-   * Login via POST /auth/login
-   * Response: { access_token, token_type, user }
-   */
   login: async (email, password) => {
     return tryApi(
       async () => {
@@ -152,9 +54,7 @@ export const authService = {
         const { data } = await client.post('/auth/login', formData, {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         });
-        // Store with the key the backend expects
         localStorage.setItem('access_token', data.access_token);
-        // Also write legacy key so AuthContext / Navbar keep working
         localStorage.setItem('assetflow_token', data.access_token);
         localStorage.setItem('assetflow_user', JSON.stringify(data.user));
         return { token: data.access_token, user: data.user };
@@ -175,10 +75,6 @@ export const authService = {
     );
   },
 
-  /**
-   * Sign up via POST /auth/signup
-   * Response: { access_token, token_type, user }
-   */
   signup: async (name, email, password) => {
     return tryApi(
       async () => {
@@ -210,10 +106,7 @@ export const authService = {
 
   getProfile: async () => {
     return tryApi(
-      async () => {
-        const { data } = await client.get('/auth/me');
-        return data;
-      },
+      async () => { const { data } = await client.get('/auth/me'); return data; },
       async () => { await delay(300); return DUMMY_USER; }
     );
   },
@@ -225,19 +118,12 @@ export const authService = {
 export const dashboardService = {
   getDashboardStats: async () => {
     return tryApi(
-      async () => {
-        const { data } = await client.get('/dashboard/stats');
-        return data;
-      },
+      async () => { const { data } = await client.get('/dashboard/stats'); return data; },
       async () => {
         await delay(600);
         return {
-          available_assets: 128,
-          allocated_assets: 76,
-          maintenance_today: 4,
-          active_bookings: 9,
-          pending_transfers: 3,
-          upcoming_returns: 12,
+          available_assets: 128, allocated_assets: 76, maintenance_today: 4,
+          active_bookings: 9, pending_transfers: 3, upcoming_returns: 12,
           recent_activity: [
             { id: 1, action: 'Laptop AF-0191 allocated to Priya Shah', time: '27 min ago', type: 'allocation' },
             { id: 2, action: 'Booking confirmed — 3:00–4:00 PM, Conf Room B', time: '1 hr ago', type: 'booking' },
@@ -250,29 +136,36 @@ export const dashboardService = {
 };
 
 // ══════════════════════════════════════════════════════════════════
-// ASSET SERVICES
+// ASSET SERVICES  — matches backend AssetOut schema
+//   GET    /assets/           → list
+//   GET    /assets/{id}       → detail
+//   POST   /assets/           → create  (AssetCreate)
+//   PUT    /assets/{id}       → update  (AssetUpdate)
 // ══════════════════════════════════════════════════════════════════
 export const assetService = {
   getAssets: async (filters = {}) => {
     return tryApi(
       async () => {
-        const { data } = await client.get('/assets', { params: filters });
-        return { data: data.items ?? data, total: data.total ?? data.length };
+        const params = {};
+        if (filters.search) params.search = filters.search;
+        if (filters.category_id) params.category_id = filters.category_id;
+        if (filters.status) params.status = filters.status;
+        const { data } = await client.get('/assets/', { params });
+        return Array.isArray(data) ? data : data.items ?? [];
       },
       async () => {
         await delay(500);
-        let assets = [...DUMMY_ASSETS];
+        let assets = [
+          { id: 1, asset_tag: 'AF-0001', name: 'Dell Laptop', category_id: 1, department_id: 1, location: 'HQ Floor 2', status: 'available', purchase_cost: 1200, created_at: '2026-07-01T00:00:00', updated_at: '2026-07-01T00:00:00' },
+          { id: 2, asset_tag: 'AF-0002', name: 'MacBook Pro', category_id: 1, department_id: 2, location: 'HQ Floor 3', status: 'allocated', purchase_cost: 2499, created_at: '2026-07-02T00:00:00', updated_at: '2026-07-02T00:00:00' },
+        ];
         if (filters.search) {
           const q = filters.search.toLowerCase();
-          assets = assets.filter((a) =>
-            a.name.toLowerCase().includes(q) ||
-            a.id.toLowerCase().includes(q) ||
-            a.category.toLowerCase().includes(q)
-          );
+          assets = assets.filter((a) => a.name.toLowerCase().includes(q) || a.asset_tag.toLowerCase().includes(q));
         }
-        if (filters.status)   assets = assets.filter((a) => a.status   === filters.status);
-        if (filters.category) assets = assets.filter((a) => a.category === filters.category);
-        return { data: assets, total: assets.length };
+        if (filters.status) assets = assets.filter((a) => a.status === filters.status);
+        if (filters.category_id) assets = assets.filter((a) => a.category_id === filters.category_id);
+        return assets;
       }
     );
   },
@@ -280,14 +173,17 @@ export const assetService = {
   getAssetById: async (id) => {
     return tryApi(
       async () => { const { data } = await client.get(`/assets/${id}`); return data; },
-      async () => { await delay(300); return DUMMY_ASSETS.find((a) => a.id === id) || null; }
+      async () => {
+        await delay(300);
+        return { id: 1, asset_tag: 'AF-0001', name: 'Dell Laptop', category_id: 1, department_id: 1, location: 'HQ Floor 2', status: 'available' };
+      }
     );
   },
 
   createAsset: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/assets', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `AF-${String(DUMMY_ASSETS.length + 1).padStart(4, '0')}` }; }
+      async () => { const { data } = await client.post('/assets/', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), asset_tag: `AF-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` }; }
     );
   },
 
@@ -297,39 +193,30 @@ export const assetService = {
       async () => { await delay(400); return { id, ...payload }; }
     );
   },
-
-  deleteAsset: async (id) => {
-    return tryApi(
-      async () => { await client.delete(`/assets/${id}`); return { success: true }; },
-      async () => { await delay(300); return { success: true }; }
-    );
-  },
 };
 
 // ══════════════════════════════════════════════════════════════════
-// ORGANIZATION SERVICES — Departments & Employees
+// ORGANIZATION SERVICES — Departments, Categories & Users
 // ══════════════════════════════════════════════════════════════════
 export const organizationService = {
   // ── Departments ──────────────────────────────────────────────
   getDepartments: async () => {
     return tryApi(
       async () => {
-        const { data } = await client.get('/departments');
+        const { data } = await client.get('/departments/');
         return Array.isArray(data) ? data : data.items ?? [];
       },
-      async () => { 
-        await delay(450); 
-        return [
-          { id: 1, name: 'Engineering', head: 'John Doe', status: 'Active' }
-        ]; 
+      async () => {
+        await delay(450);
+        return [{ id: 1, name: 'Engineering', description: 'Engineering Dept' }];
       }
     );
   },
 
   createDepartment: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/departments', payload); return data; },
-      async () => { await delay(500); return { ...payload, id: Date.now(), status: 'Active' }; }
+      async () => { const { data } = await client.post('/departments/', payload); return data; },
+      async () => { await delay(500); return { ...payload, id: Date.now() }; }
     );
   },
 
@@ -347,28 +234,42 @@ export const organizationService = {
     );
   },
 
-  // ── Employees ────────────────────────────────────────────────
-  getEmployees: async (filters = {}) => {
+  // ── Categories ───────────────────────────────────────────────
+  getCategories: async () => {
     return tryApi(
       async () => {
-        const { data } = await client.get('/users', { params: filters });
+        const { data } = await client.get('/categories/');
+        return Array.isArray(data) ? data : data.items ?? [];
+      },
+      async () => {
+        await delay(350);
+        return [
+          { id: 1, name: 'Electronics' },
+          { id: 2, name: 'Furniture' },
+          { id: 3, name: 'Vehicles' },
+        ];
+      }
+    );
+  },
+
+  // ── Users (employees) ────────────────────────────────────────
+  getUsers: async (filters = {}) => {
+    return tryApi(
+      async () => {
+        const { data } = await client.get('/users/', { params: filters });
         return Array.isArray(data) ? data : data.items ?? [];
       },
       async () => {
         await delay(450);
-        let employees = [
-          { id: 1, name: 'Alex Morgan', email: 'alex@test.com', department: 'Engineering', status: 'Active' }
-        ];
-        if (filters.department) employees = employees.filter((e) => e.department === filters.department);
-        return employees;
+        return [{ id: 1, name: 'Alex Morgan', email: 'admin@assetflow.io', role: 'admin' }];
       }
     );
   },
 
   createEmployee: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/users', payload); return data; },
-      async () => { await delay(500); return { ...payload, id: Date.now(), status: 'Active' }; }
+      async () => { const { data } = await client.post('/users/', payload); return data; },
+      async () => { await delay(500); return { ...payload, id: Date.now() }; }
     );
   },
 
@@ -385,96 +286,236 @@ export const organizationService = {
       async () => { await delay(300); return { success: true }; }
     );
   },
+
+  // Legacy alias
+  getEmployees: async (filters = {}) => organizationService.getUsers(filters),
 };
 
 // ══════════════════════════════════════════════════════════════════
-// ALLOCATION SERVICES
+// ALLOCATION SERVICES — matches backend AllocationOut / TransferOut
+//   POST   /allocations/                     → allocate
+//   GET    /allocations/                     → list
+//   POST   /allocations/{id}/return          → return asset
+//   POST   /allocations/transfers            → create transfer
+//   GET    /allocations/transfers            → list transfers
+//   POST   /allocations/transfers/{id}/approve  → approve
+//   POST   /allocations/transfers/{id}/complete → complete
 // ══════════════════════════════════════════════════════════════════
 export const allocationService = {
-  getAllocations: async () => {
+  getAllocations: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/allocations'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_ALLOCATIONS]; }
+      async () => {
+        const params = {};
+        if (filters.user_id) params.user_id = filters.user_id;
+        if (filters.asset_id) params.asset_id = filters.asset_id;
+        const { data } = await client.get('/allocations/', { params });
+        return Array.isArray(data) ? data : data.items ?? [];
+      },
+      async () => {
+        await delay(450);
+        return [
+          { id: 1, asset_id: 1, user_id: 1, allocated_by: 1, status: 'active', notes: 'New Joining', allocated_at: '2026-07-12T00:00:00', returned_at: null },
+          { id: 2, asset_id: 2, user_id: 1, allocated_by: 1, status: 'returned', notes: 'Upgrade', allocated_at: '2026-07-10T00:00:00', returned_at: '2026-07-11T00:00:00' },
+        ];
+      }
     );
   },
+
   createAllocation: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/allocations', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `AL-${String(DUMMY_ALLOCATIONS.length + 1).padStart(3, '0')}`, status: 'Active' }; }
+      async () => { const { data } = await client.post('/allocations/', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), status: 'active', allocated_at: new Date().toISOString() }; }
     );
   },
-  createTransferRequest: async (payload) => {
+
+  returnAllocation: async (allocationId) => {
     return tryApi(
-      async () => { const { data } = await client.post('/allocations/transfer', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `TR-${Date.now()}`, status: 'Pending' }; }
+      async () => { const { data } = await client.post(`/allocations/${allocationId}/return`); return data; },
+      async () => { await delay(400); return { id: allocationId, status: 'returned', returned_at: new Date().toISOString() }; }
+    );
+  },
+
+  // ── Transfers ────────────────────────────────────────────────
+  getTransfers: async (filters = {}) => {
+    return tryApi(
+      async () => {
+        const params = {};
+        if (filters.status_filter) params.status_filter = filters.status_filter;
+        const { data } = await client.get('/allocations/transfers', { params });
+        return Array.isArray(data) ? data : data.items ?? [];
+      },
+      async () => { await delay(400); return []; }
+    );
+  },
+
+  createTransfer: async (payload) => {
+    return tryApi(
+      async () => { const { data } = await client.post('/allocations/transfers', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), status: 'pending' }; }
+    );
+  },
+
+  approveTransfer: async (transferId) => {
+    return tryApi(
+      async () => { const { data } = await client.post(`/allocations/transfers/${transferId}/approve`); return data; },
+      async () => { await delay(400); return { id: transferId, status: 'approved' }; }
+    );
+  },
+
+  completeTransfer: async (transferId) => {
+    return tryApi(
+      async () => { const { data } = await client.post(`/allocations/transfers/${transferId}/complete`); return data; },
+      async () => { await delay(400); return { id: transferId, status: 'completed' }; }
     );
   },
 };
 
 // ══════════════════════════════════════════════════════════════════
-// BOOKING SERVICES
+// BOOKING SERVICES — matches backend BookingOut schema
+//   POST   /bookings/                   → create (BookingCreate)
+//   GET    /bookings/                   → list
+//   PATCH  /bookings/{id}/status?new_status=  → update status
 // ══════════════════════════════════════════════════════════════════
 export const bookingService = {
-  getBookings: async () => {
+  getBookings: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/bookings'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_BOOKINGS]; }
+      async () => {
+        const params = {};
+        if (filters.asset_id) params.asset_id = filters.asset_id;
+        if (filters.user_id) params.user_id = filters.user_id;
+        if (filters.status_filter) params.status_filter = filters.status_filter;
+        const { data } = await client.get('/bookings/', { params });
+        return Array.isArray(data) ? data : data.items ?? [];
+      },
+      async () => {
+        await delay(450);
+        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
+        return [
+          { id: 1, asset_id: 1, user_id: 1, status: 'pending', start_date: tomorrow.toISOString(), end_date: nextWeek.toISOString(), purpose: 'Business trip', approved_by: null, created_at: new Date().toISOString() },
+        ];
+      }
     );
   },
+
   createBooking: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/bookings', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `BK-${String(DUMMY_BOOKINGS.length + 1).padStart(3, '0')}`, status: 'Pending' }; }
+      async () => { const { data } = await client.post('/bookings/', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), status: 'pending', created_at: new Date().toISOString() }; }
     );
   },
-  cancelBooking: async (id) => {
+
+  updateBookingStatus: async (bookingId, newStatus) => {
     return tryApi(
-      async () => { await client.delete(`/bookings/${id}`); return { success: true }; },
-      async () => { await delay(300); return { success: true }; }
+      async () => { const { data } = await client.patch(`/bookings/${bookingId}/status`, null, { params: { new_status: newStatus } }); return data; },
+      async () => { await delay(400); return { id: bookingId, status: newStatus }; }
     );
   },
 };
 
 // ══════════════════════════════════════════════════════════════════
-// MAINTENANCE SERVICES
+// MAINTENANCE SERVICES — matches backend MaintenanceOut schema
+//   POST   /maintenance/         → create (MaintenanceCreate)
+//   GET    /maintenance/         → list
+//   PATCH  /maintenance/{id}     → update (MaintenanceUpdate)
 // ══════════════════════════════════════════════════════════════════
 export const maintenanceService = {
-  getTickets: async () => {
+  getTickets: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/maintenance'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_MAINTENANCE]; }
+      async () => {
+        const params = {};
+        if (filters.asset_id) params.asset_id = filters.asset_id;
+        if (filters.status_filter) params.status_filter = filters.status_filter;
+        const { data } = await client.get('/maintenance/', { params });
+        return Array.isArray(data) ? data : data.items ?? [];
+      },
+      async () => {
+        await delay(450);
+        return [
+          { id: 1, asset_id: 1, reported_by: 1, issue_description: 'Laptop not starting', priority: 'high', status: 'pending', created_at: '2026-07-12T00:00:00', updated_at: '2026-07-12T00:00:00' },
+          { id: 2, asset_id: 2, reported_by: 1, issue_description: 'Lamp replacement needed', priority: 'medium', status: 'approved', created_at: '2026-07-10T00:00:00', updated_at: '2026-07-10T00:00:00' },
+          { id: 3, asset_id: 3, reported_by: 1, issue_description: 'Annual inspection', priority: 'low', status: 'resolved', created_at: '2026-07-05T00:00:00', updated_at: '2026-07-05T00:00:00', resolved_at: '2026-07-06T00:00:00' },
+        ];
+      }
     );
   },
+
   createTicket: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/maintenance', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `MN-${String(DUMMY_MAINTENANCE.length + 1).padStart(4, '0')}`, status: 'Pending' }; }
+      async () => { const { data } = await client.post('/maintenance/', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), status: 'pending', created_at: new Date().toISOString() }; }
     );
   },
-  updateTicketStatus: async (id, status) => {
+
+  updateTicket: async (id, payload) => {
     return tryApi(
-      async () => { const { data } = await client.patch(`/maintenance/${id}`, { status }); return data; },
-      async () => { await delay(300); return { id, status }; }
+      async () => { const { data } = await client.patch(`/maintenance/${id}`, payload); return data; },
+      async () => { await delay(300); return { id, ...payload }; }
     );
   },
 };
 
 // ══════════════════════════════════════════════════════════════════
-// AUDIT SERVICES
+// AUDIT SERVICES — matches backend AuditCycleOut / AuditItemOut
+//   POST   /audits/cycles                → create cycle
+//   GET    /audits/cycles                → list cycles
+//   GET    /audits/cycles/{id}           → get cycle with items
+//   PATCH  /audits/items/{id}/verify     → verify item
+//   POST   /audits/cycles/{id}/close     → close cycle
 // ══════════════════════════════════════════════════════════════════
 export const auditService = {
-  getAuditLogs: async () => {
+  getCycles: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/audit'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_AUDIT_LOGS]; }
+      async () => {
+        const params = {};
+        if (filters.department_id) params.department_id = filters.department_id;
+        if (filters.is_closed !== undefined && filters.is_closed !== null) params.is_closed = filters.is_closed;
+        const { data } = await client.get('/audits/cycles', { params });
+        return Array.isArray(data) ? data : data.items ?? [];
+      },
+      async () => {
+        await delay(450);
+        return [
+          { id: 1, department_id: 1, location: 'HQ Floor 2', start_date: '2026-07-01', end_date: '2026-07-31', created_by: 1, is_closed: false, created_at: '2026-07-01T00:00:00', closed_at: null, items: [
+            { id: 1, audit_cycle_id: 1, asset_id: 1, verified_by: null, verification_status: null, remarks: null, verified_at: null },
+            { id: 2, audit_cycle_id: 1, asset_id: 2, verified_by: 1, verification_status: 'verified', remarks: 'OK', verified_at: '2026-07-12T00:00:00' },
+          ]},
+        ];
+      }
     );
   },
-  runAuditCheck: async () => {
+
+  getCycleById: async (cycleId) => {
     return tryApi(
-      async () => { const { data } = await client.post('/audit/run'); return data; },
-      async () => { await delay(1200); return { flagged: 2, verified: 4, message: '2 assets flagged — discrepancy report generated.' }; }
+      async () => { const { data } = await client.get(`/audits/cycles/${cycleId}`); return data; },
+      async () => { await delay(300); return { id: cycleId, items: [] }; }
     );
   },
+
+  createCycle: async (payload) => {
+    return tryApi(
+      async () => { const { data } = await client.post('/audits/cycles', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), is_closed: false, created_at: new Date().toISOString(), items: [] }; }
+    );
+  },
+
+  verifyItem: async (itemId, payload) => {
+    return tryApi(
+      async () => { const { data } = await client.patch(`/audits/items/${itemId}/verify`, payload); return data; },
+      async () => { await delay(400); return { id: itemId, ...payload, verified_at: new Date().toISOString() }; }
+    );
+  },
+
+  closeCycle: async (cycleId) => {
+    return tryApi(
+      async () => { const { data } = await client.post(`/audits/cycles/${cycleId}/close`); return data; },
+      async () => { await delay(400); return { id: cycleId, is_closed: true, closed_at: new Date().toISOString() }; }
+    );
+  },
+
+  // Legacy aliases for old page code
+  getAudits: async (filters) => auditService.getCycles(filters),
+  createAudit: async (payload) => auditService.createCycle(payload),
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -505,11 +546,8 @@ export const reportService = {
       async () => {
         await delay(600);
         return {
-          allocationByDept:   [{ dept: 'Engineering', count: 48 }, { dept: 'Sales', count: 22 }, { dept: 'Design', count: 16 }, { dept: 'Finance', count: 12 }, { dept: 'Facilities', count: 35 }],
-          maintenanceFrequency:[{ month: 'Jan', count: 2 }, { month: 'Feb', count: 3 }, { month: 'Mar', count: 7 }, { month: 'Apr', count: 4 }, { month: 'May', count: 9 }, { month: 'Jun', count: 5 }, { month: 'Jul', count: 8 }],
-          mostUsedAssets:     [{ asset: 'Conference Room A', bookings: 42 }, { asset: 'Projector Unit 1', bookings: 31 }, { asset: 'Training Room', bookings: 27 }],
-          lateReturns:        [{ asset: 'AF-0027 – Dell Laptop', daysLate: 8 }, { asset: 'AF-0044 – Sony Camera', daysLate: 13 }],
-          assetsDueForMaintenance: [{ id: 'AF-0027', name: 'Forklift A', daysLeft: 4 }],
+          allocationByDept:   [{ dept: 'Engineering', count: 48 }, { dept: 'Sales', count: 22 }, { dept: 'Design', count: 16 }],
+          maintenanceFrequency:[{ month: 'Jan', count: 2 }, { month: 'Feb', count: 3 }, { month: 'Mar', count: 7 }],
         };
       }
     );
