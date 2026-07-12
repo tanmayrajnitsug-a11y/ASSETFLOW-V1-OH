@@ -146,7 +146,12 @@ export const authService = {
   login: async (email, password) => {
     return tryApi(
       async () => {
-        const { data } = await client.post('/auth/login', { email, password });
+        const formData = new URLSearchParams();
+        formData.append('username', email);
+        formData.append('password', password);
+        const { data } = await client.post('/auth/login', formData, {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        });
         // Store with the key the backend expects
         localStorage.setItem('access_token', data.access_token);
         // Also write legacy key so AuthContext / Navbar keep working
