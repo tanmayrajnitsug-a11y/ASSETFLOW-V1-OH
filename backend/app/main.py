@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import auth, users, departments, categories
+from app.routers import auth, users, departments, categories, assets, allocations, bookings, maintenance, audits
 
 settings = get_settings()
 
@@ -31,6 +31,11 @@ app.include_router(auth.router)
 app.include_router(users.router, prefix="/api")
 app.include_router(departments.router, prefix="/api")
 app.include_router(categories.router, prefix="/api")
+app.include_router(assets.router, prefix="/api")
+app.include_router(allocations.router, prefix="/api")
+app.include_router(bookings.router, prefix="/api")
+app.include_router(maintenance.router, prefix="/api")
+app.include_router(audits.router, prefix="/api")
 
 @app.get("/health")
 async def health_check():
