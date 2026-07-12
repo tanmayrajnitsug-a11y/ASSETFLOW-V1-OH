@@ -42,10 +42,6 @@ export default function ReportsPage() {
     </div>
   );
 
-  // Fallback for API providing dummy structure vs real backend structure
-  // The real backend returns { dashboard, asset_utilization, maintenance_frequency, department_allocation, booking_heatmap }
-  // The dummy API returns { allocationByDept, maintenanceFrequency }
-  
   const isRealBackend = !!data.asset_utilization;
 
   let kpis = [];
@@ -63,8 +59,9 @@ export default function ReportsPage() {
     ];
 
     if (data.asset_utilization?.status_breakdown) {
+      // FIXED: Proper Title Case mapping for enum strings (e.g., UNDER_MAINTENANCE -> Under Maintenance)
       pieData = Object.entries(data.asset_utilization.status_breakdown).map(([key, val]) => ({
-        name: key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' '),
+        name: key.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
         value: val
       }));
     }
@@ -92,7 +89,6 @@ export default function ReportsPage() {
       }));
     }
   } else {
-    // Dummy Data adapter
     kpis = [
       { title: 'Total Assets', value: 120, icon: Box, type: 'info' },
       { title: 'Utilization', value: '64%', icon: TrendingUp, type: 'success' },
@@ -187,7 +183,7 @@ export default function ReportsPage() {
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}/>
+                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -233,7 +229,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* ── Booking Heatmap (Optional based on data) ── */}
+        {/* ── Booking Heatmap ── */}
         <div className="card anim-fade-in" style={{ padding: '24px', animationDelay: '0.5s' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Booking Heatmap</h3>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '24px' }}>Resource reservation activity</p>
@@ -250,7 +246,7 @@ export default function ReportsPage() {
                 </ScatterChart>
               </ResponsiveContainer>
             ) : (
-               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>Insufficient booking data for heatmap.</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>Insufficient booking data for heatmap.</div>
             )}
           </div>
         </div>

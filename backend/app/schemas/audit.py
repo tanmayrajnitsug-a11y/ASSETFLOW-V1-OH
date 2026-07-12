@@ -1,10 +1,5 @@
-# TODO: Audit schemas (AuditCycleCreate, AuditItemVerify, AuditCycleOut, AuditItemOut)
-
-
 from datetime import date, datetime
-
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, ConfigDict, Field
 from app.models.audit import AuditItemStatus
 
 
@@ -13,12 +8,14 @@ class AuditCycleCreate(BaseModel):
     location: str | None = None
     start_date: date
     end_date: date
-    created_by: int
+    # Optional because the router injects current_user.id
+    created_by: int | None = None
     auditor_ids: list[int] = Field(default_factory=list)
 
 
 class AuditItemVerify(BaseModel):
-    verified_by: int
+    # Optional because the router injects current_user.id
+    verified_by: int | None = None
     verification_status: AuditItemStatus
     remarks: str | None = None
     verified_at: datetime | None = None
@@ -33,8 +30,7 @@ class AuditItemOut(BaseModel):
     remarks: str | None = None
     verified_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AuditCycleOut(BaseModel):
@@ -49,5 +45,4 @@ class AuditCycleOut(BaseModel):
     closed_at: datetime | None = None
     items: list[AuditItemOut] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

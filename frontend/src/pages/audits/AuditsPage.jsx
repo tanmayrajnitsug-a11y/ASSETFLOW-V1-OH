@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search, Plus, AlertTriangle, X, Filter, CheckCircle, MapPin, ChevronDown, ChevronRight
 } from 'lucide-react';
@@ -46,19 +46,24 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// New Cycle Form — matches backend AuditCycleCreate
+// New Cycle Form
 // ─────────────────────────────────────────────────────────────
 function CycleForm({ departmentsList, onSubmit, onCancel, submitting, error }) {
   const today = new Date().toISOString().split('T')[0];
-  const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+
   const [form, setForm] = useState({
-    department_id: '', location: '', start_date: today, end_date: nextMonth.toISOString().split('T')[0],
+    department_id: '',
+    location: '',
+    start_date: today,
+    end_date: nextMonth.toISOString().split('T')[0],
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
-      department_id: form.department_id ? parseInt(form.department_id) : undefined,
+      department_id: form.department_id ? parseInt(form.department_id, 10) : undefined,
       location: form.location || undefined,
       start_date: form.start_date,
       end_date: form.end_date,
@@ -74,23 +79,23 @@ function CycleForm({ departmentsList, onSubmit, onCancel, submitting, error }) {
       )}
       <div>
         <label className="form-label">Department (optional — leave blank for all)</label>
-        <select className="form-input" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}>
+        <select className="form-input" value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}>
           <option value="">All Departments</option>
           {departmentsList.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
       </div>
       <div>
         <label className="form-label">Location (optional)</label>
-        <input type="text" className="form-input" value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="e.g. HQ Floor 2" />
+        <input type="text" className="form-input" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="e.g. HQ Floor 2" />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
           <label className="form-label">Start Date *</label>
-          <input type="date" className="form-input" required value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} />
+          <input type="date" className="form-input" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
         </div>
         <div>
           <label className="form-label">End Date *</label>
-          <input type="date" className="form-input" required value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} />
+          <input type="date" className="form-input" required value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
         </div>
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
@@ -104,11 +109,12 @@ function CycleForm({ departmentsList, onSubmit, onCancel, submitting, error }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Verify Item Form — matches backend AuditItemVerify
+// Verify Item Form
 // ─────────────────────────────────────────────────────────────
 function VerifyForm({ item, assetsList, onSubmit, onCancel, submitting, error }) {
   const [form, setForm] = useState({
-    verification_status: 'verified', remarks: ''
+    verification_status: 'verified',
+    remarks: ''
   });
 
   const asset = assetsList.find(a => a.id === item.asset_id);
@@ -133,7 +139,7 @@ function VerifyForm({ item, assetsList, onSubmit, onCancel, submitting, error })
       </div>
       <div>
         <label className="form-label">Verification Status *</label>
-        <select className="form-input" required value={form.verification_status} onChange={e => setForm({...form, verification_status: e.target.value})}>
+        <select className="form-input" required value={form.verification_status} onChange={e => setForm({ ...form, verification_status: e.target.value })}>
           <option value="verified">Verified (Found)</option>
           <option value="missing">Missing</option>
           <option value="damaged">Damaged</option>
@@ -141,7 +147,7 @@ function VerifyForm({ item, assetsList, onSubmit, onCancel, submitting, error })
       </div>
       <div>
         <label className="form-label">Remarks</label>
-        <textarea className="form-input" rows={2} value={form.remarks} onChange={e => setForm({...form, remarks: e.target.value})} placeholder="Any notes..." style={{ resize: 'vertical' }} />
+        <textarea className="form-input" rows={2} value={form.remarks} onChange={e => setForm({ ...form, remarks: e.target.value })} placeholder="Any notes..." style={{ resize: 'vertical' }} />
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '8px', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>
@@ -167,7 +173,7 @@ export default function AuditsPage() {
 
   // Modal state
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
-  const [verifyModalItem, setVerifyModalItem] = useState(null); // AuditItem to verify
+  const [verifyModalItem, setVerifyModalItem] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
 
@@ -200,10 +206,15 @@ export default function AuditsPage() {
     }
   };
 
-  useEffect(() => { fetchCycles(); }, []);
+  useEffect(() => {
+    fetchCycles();
+  }, []);
 
   const getDeptName = (id) => departmentsList.find(d => d.id === id)?.name || (id ? `Dept #${id}` : 'All');
-  const getAssetDisplay = (id) => { const a = assetsList.find(x => x.id === id); return a ? `${a.asset_tag} — ${a.name}` : `Asset #${id}`; };
+  const getAssetDisplay = (id) => {
+    const a = assetsList.find(x => x.id === id);
+    return a ? `${a.asset_tag} — ${a.name}` : `Asset #${id}`;
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -213,6 +224,7 @@ export default function AuditsPage() {
       default: return 'var(--text-muted)';
     }
   };
+
   const statusLabel = (s) => ({ verified: 'Verified', missing: 'Missing', damaged: 'Damaged' }[s] || 'Pending');
 
   const handleCreateCycle = async (formData) => {
