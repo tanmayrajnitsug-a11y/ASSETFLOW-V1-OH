@@ -31,10 +31,17 @@ class UserOut(BaseModel):
 
 class UserUpdate(BaseModel):
     name: str | None = None
+    email: EmailStr | None = None
     employee_id: str | None = None
     phone: str | None = None
     department_id: int | None = None
     is_active: bool | None = None
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    department_id: int | None = None
+    role: UserRole = UserRole.EMPLOYEE
 
 class RoleAssignment(BaseModel):
     role: UserRole

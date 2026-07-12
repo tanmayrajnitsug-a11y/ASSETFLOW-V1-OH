@@ -1,1 +1,5 @@
-// TODO: Assets page – register asset form, search/filter, lifecycle status, per-asset history
+import AssetsPage from '../Assets';
+
+export default function AssetsPageWrapper() {
+  return <AssetsPage />;
+}
