@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Search, Plus, Edit2, Trash2, Box, AlertTriangle, X, Filter
+  Search, Plus, Edit2, Box, AlertTriangle, X, Filter
 } from 'lucide-react';
-import { assetService } from '../api/services';
+import { assetService, organizationService } from '../api/services';
 import Loader from '../components/Loader';
 import StatusBadge from '../components/StatusBadge';
 
@@ -46,16 +46,26 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Asset Form Component
+// Asset Form Component — matches backend AssetCreate schema
 // ─────────────────────────────────────────────────────────────
-function AssetForm({ initialData, onSubmit, onCancel, submitting, error }) {
+function AssetForm({ initialData, categoriesList, departmentsList, onSubmit, onCancel, submitting, error }) {
   const [form, setForm] = useState(initialData || {
-    tag: '', name: '', category: '', department: '', location: '', status: 'Available'
+    name: '', asset_tag: '', description: '', category_id: '', department_id: '', status: 'available', location: '', purchase_cost: ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const payload = {
+      name: form.name,
+      asset_tag: form.asset_tag || undefined, // let backend auto-generate if empty
+      description: form.description || undefined,
+      category_id: parseInt(form.category_id),
+      department_id: form.department_id ? parseInt(form.department_id) : undefined,
+      status: form.status,
+      location: form.location || undefined,
+      purchase_cost: form.purchase_cost ? parseFloat(form.purchase_cost) : undefined,
+    };
+    onSubmit(payload);
   };
 
   return (
@@ -66,42 +76,51 @@ function AssetForm({ initialData, onSubmit, onCancel, submitting, error }) {
         </div>
       )}
       <div>
-        <label className="form-label">Asset Tag</label>
-        <input type="text" className="form-input" required value={form.tag} onChange={e => setForm({...form, tag: e.target.value})} placeholder="e.g. AF-0012" />
+        <label className="form-label">Asset Name *</label>
+        <input type="text" className="form-input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Dell Laptop" />
       </div>
       <div>
-        <label className="form-label">Asset Name</label>
-        <input type="text" className="form-input" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Dell Laptop" />
+        <label className="form-label">Asset Tag (auto-generated if empty)</label>
+        <input type="text" className="form-input" value={form.asset_tag} onChange={e => setForm({...form, asset_tag: e.target.value})} placeholder="e.g. AF-0012" />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
-          <label className="form-label">Category</label>
-          <select className="form-input" required value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+          <label className="form-label">Category *</label>
+          <select className="form-input" required value={form.category_id} onChange={e => setForm({...form, category_id: e.target.value})}>
             <option value="">Select...</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Furniture">Furniture</option>
-            <option value="Vehicles">Vehicles</option>
-            <option value="Software">Software</option>
-            <option value="Other">Other</option>
+            {categoriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="form-label">Status</label>
+          <label className="form-label">Status *</label>
           <select className="form-input" required value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
-            <option value="Available">Available</option>
-            <option value="Allocated">Allocated</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Retired">Retired</option>
+            <option value="available">Available</option>
+            <option value="allocated">Allocated</option>
+            <option value="under_maintenance">Under Maintenance</option>
+            <option value="retired">Retired</option>
           </select>
         </div>
       </div>
       <div>
         <label className="form-label">Department</label>
-        <input type="text" className="form-input" required value={form.department} onChange={e => setForm({...form, department: e.target.value})} placeholder="e.g. Engineering" />
+        <select className="form-input" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}>
+          <option value="">None</option>
+          {departmentsList.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+        </select>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div>
+          <label className="form-label">Location</label>
+          <input type="text" className="form-input" value={form.location || ''} onChange={e => setForm({...form, location: e.target.value})} placeholder="e.g. HQ Floor 2" />
+        </div>
+        <div>
+          <label className="form-label">Purchase Cost</label>
+          <input type="number" step="0.01" className="form-input" value={form.purchase_cost || ''} onChange={e => setForm({...form, purchase_cost: e.target.value})} placeholder="e.g. 1200.00" />
+        </div>
       </div>
       <div>
-        <label className="form-label">Location</label>
-        <input type="text" className="form-input" required value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="e.g. HQ Floor 2" />
+        <label className="form-label">Description</label>
+        <input type="text" className="form-input" value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} placeholder="Optional description" />
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>
@@ -114,36 +133,61 @@ function AssetForm({ initialData, onSubmit, onCancel, submitting, error }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Status display helper
+// ─────────────────────────────────────────────────────────────
+const statusLabel = (s) => {
+  const map = { available: 'Available', allocated: 'Allocated', under_maintenance: 'Maintenance', retired: 'Retired' };
+  return map[s] || s;
+};
+
+// ─────────────────────────────────────────────────────────────
 // Main Page Component
 // ─────────────────────────────────────────────────────────────
 export default function AssetsPage() {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  
+
   // Data State
   const [assets, setAssets] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [departmentsList, setDepartmentsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
-  
+
   // Modal State
-  const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null }); // type: 'add' | 'edit'
+  const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
+
+  // Load dropdowns
+  useEffect(() => {
+    async function fetchDropdowns() {
+      try {
+        const [cats, depts] = await Promise.all([
+          organizationService.getCategories(),
+          organizationService.getDepartments(),
+        ]);
+        setCategoriesList(cats || []);
+        setDepartmentsList(depts || []);
+      } catch (err) {
+        console.error('Failed to load dropdown data', err);
+      }
+    }
+    fetchDropdowns();
+  }, []);
 
   // Fetch Data
   const fetchData = async () => {
     setLoading(true);
     setPageError('');
     try {
-      const res = await assetService.getAssets({ 
-        search, 
-        category: filterCategory,
-        department: filterDepartment,
-        status: filterStatus
-      });
-      setAssets(res.data || []);
+      const params = {};
+      if (search) params.search = search;
+      if (filterCategory) params.category_id = parseInt(filterCategory);
+      if (filterStatus) params.status = filterStatus;
+      const res = await assetService.getAssets(params);
+      setAssets(res || []);
     } catch (err) {
       setPageError('Unable to load assets. Please try again later.');
     } finally {
@@ -151,20 +195,25 @@ export default function AssetsPage() {
     }
   };
 
-  useEffect(() => { 
-    // Add debounce for search, immediate for filters
-    const timeout = setTimeout(() => {
-      fetchData();
-    }, 300);
+  useEffect(() => {
+    const timeout = setTimeout(() => { fetchData(); }, 300);
     return () => clearTimeout(timeout);
-  }, [search, filterCategory, filterDepartment, filterStatus]);
+  }, [search, filterCategory, filterStatus]);
+
+  // Helpers to resolve IDs to names
+  const getCategoryName = (id) => categoriesList.find(c => c.id === id)?.name || `#${id}`;
+  const getDepartmentName = (id) => departmentsList.find(d => d.id === id)?.name || (id ? `#${id}` : '—');
 
   // Handlers
   const openModal = (type, data = null) => {
     setModalError('');
+    // When editing, convert int IDs to strings for form selects
+    if (data) {
+      data = { ...data, category_id: String(data.category_id || ''), department_id: String(data.department_id || '') };
+    }
     setModalState({ isOpen: true, type, data });
   };
-  
+
   const closeModal = () => {
     setModalState({ isOpen: false, type: null, data: null });
     setModalError('');
@@ -180,23 +229,11 @@ export default function AssetsPage() {
         await assetService.createAsset(formData);
       }
       closeModal();
-      fetchData(); // Refresh after add/edit
+      fetchData();
     } catch (err) {
-      setModalError('Failed to save asset. Please check your connection.');
+      setModalError(err.displayMessage || 'Failed to save asset.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this asset?')) return;
-    setLoading(true);
-    try {
-      await assetService.deleteAsset(id);
-      fetchData(); // Refresh after delete
-    } catch (err) {
-      setPageError('Failed to delete asset.');
-      setLoading(false);
     }
   };
 
@@ -215,7 +252,7 @@ export default function AssetsPage() {
             Manage and track all enterprise assets.
           </p>
         </div>
-        <button 
+        <button
           className="btn btn-primary" style={{ padding: '0 20px', height: '40px' }}
           onClick={() => openModal('add')}
         >
@@ -235,8 +272,8 @@ export default function AssetsPage() {
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', width: '280px' }}>
           <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" className="form-input" placeholder="Search assets by name or tag..." 
+          <input
+            type="text" className="form-input" placeholder="Search assets by name or tag..."
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ paddingLeft: '36px', height: '38px', fontSize: '0.8125rem' }}
           />
@@ -245,24 +282,14 @@ export default function AssetsPage() {
           <Filter size={16} color="var(--text-muted)" />
           <select className="form-input" style={{ width: '150px', height: '38px', fontSize: '0.8125rem' }} value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
             <option value="">All Categories</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Furniture">Furniture</option>
-            <option value="Vehicles">Vehicles</option>
-            <option value="Software">Software</option>
-          </select>
-          <select className="form-input" style={{ width: '150px', height: '38px', fontSize: '0.8125rem' }} value={filterDepartment} onChange={e => setFilterDepartment(e.target.value)}>
-            <option value="">All Departments</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Design">Design</option>
-            <option value="Sales">Sales</option>
-            <option value="Finance">Finance</option>
+            {categoriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select className="form-input" style={{ width: '150px', height: '38px', fontSize: '0.8125rem' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">All Statuses</option>
-            <option value="Available">Available</option>
-            <option value="Allocated">Allocated</option>
-            <option value="Maintenance">Maintenance</option>
-            <option value="Retired">Retired</option>
+            <option value="available">Available</option>
+            <option value="allocated">Allocated</option>
+            <option value="under_maintenance">Maintenance</option>
+            <option value="retired">Retired</option>
           </select>
         </div>
       </div>
@@ -291,16 +318,15 @@ export default function AssetsPage() {
                 )}
                 {assets.map(asset => (
                   <tr key={asset.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: loading ? 0.5 : 1 }}>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{asset.tag}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{asset.asset_tag}</td>
                     <td style={{ padding: '16px 24px', fontWeight: 500, color: 'var(--text-primary)' }}>{asset.name}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{asset.category}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{asset.department}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{asset.location}</td>
-                    <td style={{ padding: '16px 24px' }}><StatusBadge status={asset.status || 'Available'} /></td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{getCategoryName(asset.category_id)}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{getDepartmentName(asset.department_id)}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{asset.location || '—'}</td>
+                    <td style={{ padding: '16px 24px' }}><StatusBadge status={statusLabel(asset.status)} /></td>
                     <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                         <button onClick={() => openModal('edit', asset)} className="btn btn-outline" style={{ padding: '6px', minHeight: 0 }}><Edit2 size={14} /></button>
-                        <button onClick={() => handleDelete(asset.id)} className="btn btn-outline" style={{ padding: '6px', minHeight: 0, color: 'var(--danger)', borderColor: 'var(--danger-border)' }}><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -312,16 +338,18 @@ export default function AssetsPage() {
       </div>
 
       {/* ── Modals ── */}
-      <Modal 
-        isOpen={modalState.isOpen} 
-        onClose={closeModal} 
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
         title={modalState.type === 'add' ? 'Register Asset' : 'Edit Asset'}
       >
-        <AssetForm 
-          initialData={modalState.data} 
-          onSubmit={handleSubmit} 
-          onCancel={closeModal} 
-          submitting={submitting} 
+        <AssetForm
+          initialData={modalState.data}
+          categoriesList={categoriesList}
+          departmentsList={departmentsList}
+          onSubmit={handleSubmit}
+          onCancel={closeModal}
+          submitting={submitting}
           error={modalError}
         />
       </Modal>

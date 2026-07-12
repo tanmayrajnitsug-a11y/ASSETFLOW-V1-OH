@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Search, Plus, Edit2, Trash2, AlertTriangle, X, Filter, Calendar
+  Search, Plus, AlertTriangle, X, Filter, Calendar
 } from 'lucide-react';
 import { bookingService, assetService, organizationService } from '../../api/services';
 import Loader from '../../components/Loader';
@@ -46,16 +46,30 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Booking Form Component
+// Booking Form — matches backend BookingCreate
+// Fields: asset_id (int), start_date (datetime), end_date (datetime), purpose (str)
+// user_id is auto-set from JWT by the router
 // ─────────────────────────────────────────────────────────────
-function BookingForm({ initialData, assetsList, employeesList, onSubmit, onCancel, submitting, error }) {
-  const [form, setForm] = useState(initialData || {
-    asset: '', employee: '', booking_date: new Date().toISOString().split('T')[0], start_time: '09:00', end_time: '10:00', purpose: '', status: 'Pending'
+function BookingForm({ assetsList, onSubmit, onCancel, submitting, error }) {
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const [form, setForm] = useState({
+    asset_id: '',
+    start_date: tomorrow.toISOString().split('T')[0],
+    end_date: nextWeek.toISOString().split('T')[0],
+    purpose: '',
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    onSubmit({
+      asset_id: parseInt(form.asset_id),
+      start_date: new Date(form.start_date).toISOString(),
+      end_date: new Date(form.end_date).toISOString(),
+      purpose: form.purpose || undefined,
+      status: 'pending',
+    });
   };
 
   return (
@@ -65,54 +79,27 @@ function BookingForm({ initialData, assetsList, employeesList, onSubmit, onCance
           {error}
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <div>
-          <label className="form-label">Asset</label>
-          <select className="form-input" required value={form.asset} onChange={e => setForm({...form, asset: e.target.value})}>
-            <option value="">Select Asset...</option>
-            {assetsList.map(a => <option key={a.id} value={a.name}>{a.name} ({a.tag})</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="form-label">Employee</label>
-          <select className="form-input" required value={form.employee} onChange={e => setForm({...form, employee: e.target.value})}>
-            <option value="">Select Employee...</option>
-            {employeesList.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-          </select>
-        </div>
-      </div>
       <div>
-        <label className="form-label">Booking Date</label>
-        <input type="date" className="form-input" required value={form.booking_date} onChange={e => setForm({...form, booking_date: e.target.value})} />
+        <label className="form-label">Asset *</label>
+        <select className="form-input" required value={form.asset_id} onChange={e => setForm({...form, asset_id: e.target.value})}>
+          <option value="">Select Asset...</option>
+          {assetsList.map(a => <option key={a.id} value={a.id}>{a.asset_tag} — {a.name}</option>)}
+        </select>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
-          <label className="form-label">Start Time</label>
-          <input type="time" className="form-input" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} />
+          <label className="form-label">Start Date *</label>
+          <input type="date" className="form-input" required value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} />
         </div>
         <div>
-          <label className="form-label">End Time</label>
-          <input type="time" className="form-input" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} />
+          <label className="form-label">End Date *</label>
+          <input type="date" className="form-input" required value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} />
         </div>
       </div>
       <div>
         <label className="form-label">Purpose</label>
-        <input type="text" className="form-input" required value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} placeholder="e.g. Client Presentation" />
+        <input type="text" className="form-input" value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} placeholder="e.g. Client Presentation" />
       </div>
-      
-      {initialData && (
-        <div>
-          <label className="form-label">Status</label>
-          <select className="form-input" required value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Cancelled">Cancelled</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-      )}
-
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>
         <button type="submit" className="btn btn-primary" disabled={submitting}>
@@ -128,31 +115,27 @@ function BookingForm({ initialData, assetsList, employeesList, onSubmit, onCance
 // ─────────────────────────────────────────────────────────────
 export default function BookingsPage() {
   const [search, setSearch] = useState('');
-  const [filterDate, setFilterDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  
-  // Data State
+
   const [bookings, setBookings] = useState([]);
   const [assetsList, setAssetsList] = useState([]);
-  const [employeesList, setEmployeesList] = useState([]);
+  const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
-  
-  // Modal State
-  const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
+
+  const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
 
-  // Initial Load (Dropdowns)
   useEffect(() => {
     async function fetchDropdowns() {
       try {
-        const [assetsRes, empsRes] = await Promise.all([
-          assetService.getAssets({ category: 'AV Equipment' }), // Assume mostly AV/Rooms are booked, but can just fetch all or filter later
-          organizationService.getEmployees()
+        const [assets, users] = await Promise.all([
+          assetService.getAssets({}),
+          organizationService.getUsers(),
         ]);
-        setAssetsList(assetsRes.data || []);
-        setEmployeesList(empsRes || []);
+        setAssetsList(assets || []);
+        setUsersList(users || []);
       } catch (err) {
         console.error('Failed to load dropdown data', err);
       }
@@ -160,91 +143,71 @@ export default function BookingsPage() {
     fetchDropdowns();
   }, []);
 
-  // Fetch Bookings
   const fetchBookings = async () => {
     setLoading(true);
     setPageError('');
     try {
-      const res = await bookingService.getBookings({ 
-        search, 
-        booking_date: filterDate,
-        status: filterStatus
-      });
-      setBookings(res || []);
+      const params = {};
+      if (filterStatus) params.status_filter = filterStatus;
+      const res = await bookingService.getBookings(params);
+      let data = res || [];
+      if (search) {
+        const q = search.toLowerCase();
+        data = data.filter(b => (b.purpose || '').toLowerCase().includes(q) || String(b.asset_id).includes(q));
+      }
+      setBookings(data);
     } catch (err) {
-      setPageError('Unable to load bookings. Please try again later.');
+      setPageError('Unable to load bookings.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { 
-    const timeout = setTimeout(() => {
-      fetchBookings();
-    }, 300);
+  useEffect(() => {
+    const timeout = setTimeout(() => { fetchBookings(); }, 300);
     return () => clearTimeout(timeout);
-  }, [search, filterDate, filterStatus]);
+  }, [search, filterStatus]);
 
-  // Handlers
-  const openModal = (type, data = null) => {
-    setModalError('');
-    setModalState({ isOpen: true, type, data });
-  };
-  
-  const closeModal = () => {
-    setModalState({ isOpen: false, type: null, data: null });
-    setModalError('');
-  };
+  const getAssetName = (id) => { const a = assetsList.find(x => x.id === id); return a ? `${a.asset_tag} — ${a.name}` : `Asset #${id}`; };
+  const getUserName = (id) => { const u = usersList.find(x => x.id === id); return u ? u.name : `User #${id}`; };
+  const statusLabel = (s) => ({ pending: 'Pending', approved: 'Approved', active: 'Active', completed: 'Completed', cancelled: 'Cancelled' }[s] || s);
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString() : '—';
 
   const handleSubmit = async (formData) => {
     setSubmitting(true);
     setModalError('');
     try {
-      if (modalState.type === 'edit') {
-        await bookingService.updateBooking(modalState.data.id, formData);
-      } else {
-        await bookingService.createBooking(formData);
-      }
-      closeModal();
-      fetchBookings(); 
+      await bookingService.createBooking(formData);
+      setModalOpen(false);
+      fetchBookings();
     } catch (err) {
-      setModalError('Failed to save booking. Please check your connection.');
+      setModalError(err.displayMessage || 'Failed to create booking. The asset may already be booked for this period.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this booking?')) return;
+  const handleStatusChange = async (bookingId, newStatus) => {
     setLoading(true);
     try {
-      await bookingService.deleteBooking(id);
-      fetchBookings(); 
+      await bookingService.updateBookingStatus(bookingId, newStatus);
+      fetchBookings();
     } catch (err) {
-      setPageError('Failed to delete booking.');
+      setPageError(err.displayMessage || 'Failed to update status.');
       setLoading(false);
     }
   };
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
-      {/* ── Header ── */}
       <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{
-            fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem',
-            fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px'
-          }}>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             Asset Bookings
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Schedule and manage short-term asset reservations.
-          </p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Schedule and manage asset reservations.</p>
         </div>
-        <button 
-          className="btn btn-primary" style={{ padding: '0 20px', height: '40px' }}
-          onClick={() => openModal('add')}
-        >
+        <button className="btn btn-primary" style={{ padding: '0 20px', height: '40px' }} onClick={() => { setModalError(''); setModalOpen(true); }}>
           <Plus size={16} style={{ marginRight: '8px' }} />
           New Booking
         </button>
@@ -261,33 +224,25 @@ export default function BookingsPage() {
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', width: '280px' }}>
           <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" className="form-input" placeholder="Search by asset, employee or purpose..." 
+          <input type="text" className="form-input" placeholder="Search by purpose..."
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ paddingLeft: '36px', height: '38px', fontSize: '0.8125rem' }}
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Filter size={16} color="var(--text-muted)" />
-          <div style={{ position: 'relative' }}>
-            <Calendar size={14} color="var(--text-muted)" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
-            <input 
-              type="date" className="form-input" 
-              value={filterDate} onChange={e => setFilterDate(e.target.value)}
-              style={{ width: '160px', height: '38px', fontSize: '0.8125rem', paddingLeft: '32px' }}
-            />
-          </div>
           <select className="form-input" style={{ width: '150px', height: '38px', fontSize: '0.8125rem' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
       </div>
 
-      {/* ── Content Table ── */}
+      {/* ── Table ── */}
       <div className="card" style={{ overflow: 'hidden' }}>
         {loading && bookings.length === 0 ? (
           <div style={{ padding: '60px 0' }}><Loader message="Loading bookings..." /></div>
@@ -297,10 +252,9 @@ export default function BookingsPage() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
                   <th style={{ padding: '16px 24px', fontWeight: 500 }}>Asset</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Employee</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Booking Date</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Start Time</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>End Time</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Booked By</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Start Date</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>End Date</th>
                   <th style={{ padding: '16px 24px', fontWeight: 500 }}>Purpose</th>
                   <th style={{ padding: '16px 24px', fontWeight: 500 }}>Status</th>
                   <th style={{ padding: '16px 24px', fontWeight: 500, textAlign: 'right' }}>Actions</th>
@@ -308,22 +262,23 @@ export default function BookingsPage() {
               </thead>
               <tbody>
                 {bookings.length === 0 && !loading && (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No bookings found matching your criteria.</td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No bookings found.</td></tr>
                 )}
-                {bookings.map(book => (
-                  <tr key={book.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: loading ? 0.5 : 1 }}>
-                    <td style={{ padding: '16px 24px', fontWeight: 500, color: 'var(--text-primary)' }}>{book.asset}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{book.employee}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{book.booking_date}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{book.start_time}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{book.end_time}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{book.purpose}</td>
-                    <td style={{ padding: '16px 24px' }}><StatusBadge status={book.status || 'Pending'} /></td>
+                {bookings.map(b => (
+                  <tr key={b.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: loading ? 0.5 : 1 }}>
+                    <td style={{ padding: '16px 24px', fontWeight: 500, color: 'var(--text-primary)' }}>{getAssetName(b.asset_id)}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{getUserName(b.user_id)}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{fmtDate(b.start_date)}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{fmtDate(b.end_date)}</td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{b.purpose || '—'}</td>
+                    <td style={{ padding: '16px 24px' }}><StatusBadge status={statusLabel(b.status)} /></td>
                     <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <button onClick={() => openModal('edit', book)} className="btn btn-outline" style={{ padding: '6px', minHeight: 0 }}><Edit2 size={14} /></button>
-                        <button onClick={() => handleDelete(book.id)} className="btn btn-outline" style={{ padding: '6px', minHeight: 0, color: 'var(--danger)', borderColor: 'var(--danger-border)' }}><Trash2 size={14} /></button>
-                      </div>
+                      {b.status === 'pending' && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                          <button onClick={() => handleStatusChange(b.id, 'approved')} className="btn btn-outline" style={{ padding: '4px 10px', minHeight: 0, fontSize: '0.75rem', color: '#10B981' }}>Approve</button>
+                          <button onClick={() => handleStatusChange(b.id, 'cancelled')} className="btn btn-outline" style={{ padding: '4px 10px', minHeight: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>Cancel</button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -333,19 +288,12 @@ export default function BookingsPage() {
         )}
       </div>
 
-      {/* ── Modals ── */}
-      <Modal 
-        isOpen={modalState.isOpen} 
-        onClose={closeModal} 
-        title={modalState.type === 'add' ? 'New Booking' : 'Edit Booking'}
-      >
-        <BookingForm 
-          initialData={modalState.data} 
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="New Booking">
+        <BookingForm
           assetsList={assetsList}
-          employeesList={employeesList}
-          onSubmit={handleSubmit} 
-          onCancel={closeModal} 
-          submitting={submitting} 
+          onSubmit={handleSubmit}
+          onCancel={() => setModalOpen(false)}
+          submitting={submitting}
           error={modalError}
         />
       </Modal>

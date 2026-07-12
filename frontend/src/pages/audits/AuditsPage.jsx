@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Search, Plus, Edit2, Trash2, AlertTriangle, X, Filter, CheckCircle, MapPin
+  Search, Plus, AlertTriangle, X, Filter, CheckCircle, MapPin, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { auditService, assetService, organizationService } from '../../api/services';
 import Loader from '../../components/Loader';
@@ -46,21 +46,22 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Audit Form Component
+// New Cycle Form — matches backend AuditCycleCreate
 // ─────────────────────────────────────────────────────────────
-function AuditForm({ initialData, assetsList, onSubmit, onCancel, submitting, error }) {
-  const [form, setForm] = useState(initialData || {
-    audit_name: 'Quarterly Audit Q3', asset_tag: '', verification_status: 'Found', remarks: ''
+function CycleForm({ departmentsList, onSubmit, onCancel, submitting, error }) {
+  const today = new Date().toISOString().split('T')[0];
+  const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const [form, setForm] = useState({
+    department_id: '', location: '', start_date: today, end_date: nextMonth.toISOString().split('T')[0],
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const selectedAsset = assetsList.find(a => a.tag === form.asset_tag);
     onSubmit({
-      ...form,
-      asset: selectedAsset ? selectedAsset.name : form.asset_tag,
-      department: selectedAsset ? selectedAsset.department : '',
-      expected_location: selectedAsset ? selectedAsset.location : ''
+      department_id: form.department_id ? parseInt(form.department_id) : undefined,
+      location: form.location || undefined,
+      start_date: form.start_date,
+      end_date: form.end_date,
     });
   };
 
@@ -71,35 +72,78 @@ function AuditForm({ initialData, assetsList, onSubmit, onCancel, submitting, er
           {error}
         </div>
       )}
-
       <div>
-        <label className="form-label">Audit Name</label>
-        <input type="text" className="form-input" required value={form.audit_name} onChange={e => setForm({...form, audit_name: e.target.value})} placeholder="e.g. Quarterly Audit Q3" />
-      </div>
-      
-      <div>
-        <label className="form-label">Asset</label>
-        <select className="form-input" required value={form.asset_tag} onChange={e => setForm({...form, asset_tag: e.target.value})}>
-          <option value="">Select Asset to verify...</option>
-          {assetsList.map(a => <option key={a.id} value={a.tag}>{a.tag} - {a.name}</option>)}
+        <label className="form-label">Department (optional — leave blank for all)</label>
+        <select className="form-input" value={form.department_id} onChange={e => setForm({...form, department_id: e.target.value})}>
+          <option value="">All Departments</option>
+          {departmentsList.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
       </div>
-
       <div>
-        <label className="form-label">Verification Status</label>
+        <label className="form-label">Location (optional)</label>
+        <input type="text" className="form-input" value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="e.g. HQ Floor 2" />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div>
+          <label className="form-label">Start Date *</label>
+          <input type="date" className="form-input" required value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} />
+        </div>
+        <div>
+          <label className="form-label">End Date *</label>
+          <input type="date" className="form-input" required value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} />
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
+        <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>
+        <button type="submit" className="btn btn-primary" disabled={submitting}>
+          {submitting ? <Loader inline /> : 'Start Audit Cycle'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Verify Item Form — matches backend AuditItemVerify
+// ─────────────────────────────────────────────────────────────
+function VerifyForm({ item, assetsList, onSubmit, onCancel, submitting, error }) {
+  const [form, setForm] = useState({
+    verification_status: 'verified', remarks: ''
+  });
+
+  const asset = assetsList.find(a => a.id === item.asset_id);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(item.id, {
+      verification_status: form.verification_status,
+      remarks: form.remarks || undefined,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {error && (
+        <div style={{ padding: '10px 14px', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger)', fontSize: '0.8125rem', borderRadius: 'var(--radius-md)' }}>
+          {error}
+        </div>
+      )}
+      <div style={{ padding: '12px 16px', background: 'var(--bg-element)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+        <strong>Asset:</strong> {asset ? `${asset.asset_tag} — ${asset.name}` : `Asset #${item.asset_id}`}
+      </div>
+      <div>
+        <label className="form-label">Verification Status *</label>
         <select className="form-input" required value={form.verification_status} onChange={e => setForm({...form, verification_status: e.target.value})}>
-          <option value="Found">Found</option>
-          <option value="Missing">Missing</option>
-          <option value="Damaged">Damaged</option>
+          <option value="verified">Verified (Found)</option>
+          <option value="missing">Missing</option>
+          <option value="damaged">Damaged</option>
         </select>
       </div>
-
       <div>
         <label className="form-label">Remarks</label>
-        <textarea className="form-input" required rows={3} value={form.remarks} onChange={e => setForm({...form, remarks: e.target.value})} placeholder="Any additional notes..." style={{ resize: 'vertical' }} />
+        <textarea className="form-input" rows={2} value={form.remarks} onChange={e => setForm({...form, remarks: e.target.value})} placeholder="Any notes..." style={{ resize: 'vertical' }} />
       </div>
-
-      <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: '12px', marginTop: '8px', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>
         <button type="submit" className="btn btn-primary" disabled={submitting}>
           {submitting ? <Loader inline /> : 'Verify'}
@@ -110,35 +154,32 @@ function AuditForm({ initialData, assetsList, onSubmit, onCancel, submitting, er
 }
 
 // ─────────────────────────────────────────────────────────────
-// Main Page Component
+// Main Page
 // ─────────────────────────────────────────────────────────────
 export default function AuditsPage() {
-  const [search, setSearch] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  
-  // Data State
-  const [audits, setAudits] = useState([]);
+  const [cycles, setCycles] = useState([]);
   const [assetsList, setAssetsList] = useState([]);
   const [departmentsList, setDepartmentsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
-  
-  // Modal State
-  const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
+
+  const [expandedCycleId, setExpandedCycleId] = useState(null);
+
+  // Modal state
+  const [cycleModalOpen, setCycleModalOpen] = useState(false);
+  const [verifyModalItem, setVerifyModalItem] = useState(null); // AuditItem to verify
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
 
-  // Initial Load (Dropdowns)
   useEffect(() => {
     async function fetchDropdowns() {
       try {
-        const [assetsRes, deptsRes] = await Promise.all([
-          assetService.getAssets(), 
-          organizationService.getDepartments()
+        const [assets, depts] = await Promise.all([
+          assetService.getAssets({}),
+          organizationService.getDepartments(),
         ]);
-        setAssetsList(assetsRes.data || []);
-        setDepartmentsList(deptsRes || []);
+        setAssetsList(assets || []);
+        setDepartmentsList(depts || []);
       } catch (err) {
         console.error('Failed to load dropdown data', err);
       }
@@ -146,78 +187,69 @@ export default function AuditsPage() {
     fetchDropdowns();
   }, []);
 
-  // Fetch Audits
-  const fetchAudits = async () => {
+  const fetchCycles = async () => {
     setLoading(true);
     setPageError('');
     try {
-      const res = await auditService.getAudits({ 
-        search, 
-        department: filterDepartment,
-        verification_status: filterStatus
-      });
-      setAudits(res || []);
+      const res = await auditService.getCycles({});
+      setCycles(res || []);
     } catch (err) {
-      setPageError('Unable to load audits. Please try again later.');
+      setPageError('Unable to load audit cycles.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { 
-    const timeout = setTimeout(() => {
-      fetchAudits();
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [search, filterDepartment, filterStatus]);
+  useEffect(() => { fetchCycles(); }, []);
 
-  // Handlers
-  const openModal = (type, data = null) => {
-    setModalError('');
-    setModalState({ isOpen: true, type, data });
-  };
-  
-  const closeModal = () => {
-    setModalState({ isOpen: false, type: null, data: null });
-    setModalError('');
-  };
+  const getDeptName = (id) => departmentsList.find(d => d.id === id)?.name || (id ? `Dept #${id}` : 'All');
+  const getAssetDisplay = (id) => { const a = assetsList.find(x => x.id === id); return a ? `${a.asset_tag} — ${a.name}` : `Asset #${id}`; };
 
-  const handleSubmit = async (formData) => {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'verified': return '#10B981';
+      case 'damaged': return '#F59E0B';
+      case 'missing': return '#EF4444';
+      default: return 'var(--text-muted)';
+    }
+  };
+  const statusLabel = (s) => ({ verified: 'Verified', missing: 'Missing', damaged: 'Damaged' }[s] || 'Pending');
+
+  const handleCreateCycle = async (formData) => {
     setSubmitting(true);
     setModalError('');
     try {
-      if (modalState.type === 'edit') {
-        await auditService.updateAudit(modalState.data.id, formData);
-      } else {
-        await auditService.createAudit(formData);
-      }
-      closeModal();
-      fetchAudits(); 
+      await auditService.createCycle(formData);
+      setCycleModalOpen(false);
+      fetchCycles();
     } catch (err) {
-      setModalError('Failed to save audit record. Please check your connection.');
+      setModalError(err.displayMessage || 'Failed to create audit cycle.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this audit record?')) return;
-    setLoading(true);
+  const handleVerifyItem = async (itemId, formData) => {
+    setSubmitting(true);
+    setModalError('');
     try {
-      await auditService.deleteAudit(id);
-      fetchAudits(); 
+      await auditService.verifyItem(itemId, formData);
+      setVerifyModalItem(null);
+      fetchCycles();
     } catch (err) {
-      setPageError('Failed to delete audit record.');
-      setLoading(false);
+      setModalError(err.displayMessage || 'Failed to verify item.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Found': return '#10B981';
-      case 'Damaged': return '#F59E0B';
-      case 'Missing': return '#EF4444';
-      default: return 'var(--text-muted)';
+  const handleCloseCycle = async (cycleId) => {
+    if (!window.confirm('Close this audit cycle? This cannot be undone.')) return;
+    try {
+      await auditService.closeCycle(cycleId);
+      fetchCycles();
+    } catch (err) {
+      setPageError(err.displayMessage || 'Failed to close cycle.');
     }
   };
 
@@ -226,22 +258,14 @@ export default function AuditsPage() {
       {/* ── Header ── */}
       <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{
-            fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem',
-            fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px'
-          }}>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             Asset Audits
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-            Conduct compliance checks and verify asset locations.
-          </p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Conduct compliance checks and verify asset locations.</p>
         </div>
-        <button 
-          className="btn btn-primary" style={{ padding: '0 20px', height: '40px' }}
-          onClick={() => openModal('add')}
-        >
+        <button className="btn btn-primary" style={{ padding: '0 20px', height: '40px' }} onClick={() => { setModalError(''); setCycleModalOpen(true); }}>
           <CheckCircle size={16} style={{ marginRight: '8px' }} />
-          Start Audit
+          New Audit Cycle
         </button>
       </div>
 
@@ -252,101 +276,133 @@ export default function AuditsPage() {
         </div>
       )}
 
-      {/* ── Filters ── */}
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', width: '280px' }}>
-          <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" className="form-input" placeholder="Search by asset or audit name..." 
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ paddingLeft: '36px', height: '38px', fontSize: '0.8125rem' }}
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={16} color="var(--text-muted)" />
-          <select className="form-input" style={{ width: '160px', height: '38px', fontSize: '0.8125rem' }} value={filterDepartment} onChange={e => setFilterDepartment(e.target.value)}>
-            <option value="">All Departments</option>
-            {departmentsList.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-          </select>
-          <select className="form-input" style={{ width: '150px', height: '38px', fontSize: '0.8125rem' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="">All Statuses</option>
-            <option value="Found">Found</option>
-            <option value="Missing">Missing</option>
-            <option value="Damaged">Damaged</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ── Content Table ── */}
-      <div className="card" style={{ overflow: 'hidden' }}>
-        {loading && audits.length === 0 ? (
-          <div style={{ padding: '60px 0' }}><Loader message="Loading audit records..." /></div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Audit Name</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Asset</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Asset Tag</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Department</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Expected Location</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Verification Status</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Verified By</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500 }}>Verified Date</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 500, textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {audits.length === 0 && !loading && (
-                  <tr><td colSpan={9} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No audit records found.</td></tr>
-                )}
-                {audits.map(audit => (
-                  <tr key={audit.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: loading ? 0.5 : 1 }}>
-                    <td style={{ padding: '16px 24px', fontWeight: 500, color: 'var(--text-primary)' }}>{audit.audit_name}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-primary)' }}>{audit.asset}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{audit.asset_tag}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{audit.department}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <MapPin size={12} /> {audit.expected_location}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '12px', background: 'var(--bg-element)', fontSize: '0.75rem', fontWeight: 600, color: getStatusColor(audit.verification_status), border: `1px solid ${getStatusColor(audit.verification_status)}33` }}>
-                        {audit.verification_status}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{audit.verified_by}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{audit.verified_at}</td>
-                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <button onClick={() => openModal('edit', audit)} className="btn btn-outline" style={{ padding: '6px', minHeight: 0 }}><Edit2 size={14} /></button>
-                        <button onClick={() => handleDelete(audit.id)} className="btn btn-outline" style={{ padding: '6px', minHeight: 0, color: 'var(--danger)', borderColor: 'var(--danger-border)' }}><Trash2 size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ── Cycle List ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {loading && cycles.length === 0 ? (
+          <div style={{ padding: '60px 0' }}><Loader message="Loading audit cycles..." /></div>
+        ) : cycles.length === 0 ? (
+          <div className="card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            No audit cycles found. Start one to begin verifying assets.
           </div>
+        ) : (
+          cycles.map(cycle => {
+            const isExpanded = expandedCycleId === cycle.id;
+            const items = cycle.items || [];
+            const verified = items.filter(i => i.verification_status).length;
+            const total = items.length;
+            const progress = total > 0 ? Math.round((verified / total) * 100) : 0;
+
+            return (
+              <div key={cycle.id} className="card" style={{ overflow: 'hidden' }}>
+                {/* Cycle header */}
+                <div
+                  onClick={() => setExpandedCycleId(isExpanded ? null : cycle.id)}
+                  style={{
+                    padding: '20px 24px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    borderBottom: isExpanded ? '1px solid var(--border-subtle)' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {isExpanded ? <ChevronDown size={16} color="var(--text-muted)" /> : <ChevronRight size={16} color="var(--text-muted)" />}
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>
+                        {getDeptName(cycle.department_id)} — {cycle.location || 'All Locations'}
+                      </div>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {cycle.start_date} → {cycle.end_date} · {verified}/{total} verified
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Progress bar */}
+                    <div style={{ width: '100px', height: '6px', background: 'var(--border-subtle)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: progress === 100 ? '#10B981' : 'var(--accent)', borderRadius: '3px', transition: 'width 0.3s' }} />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', minWidth: '30px' }}>{progress}%</span>
+                    <StatusBadge status={cycle.is_closed ? 'Closed' : 'Active'} />
+                  </div>
+                </div>
+
+                {/* Expanded items */}
+                {isExpanded && (
+                  <div style={{ padding: '16px 24px' }}>
+                    {!cycle.is_closed && (
+                      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleCloseCycle(cycle.id)} className="btn btn-outline" style={{ fontSize: '0.8125rem', padding: '6px 14px', minHeight: 0 }}>
+                          Close Cycle
+                        </button>
+                      </div>
+                    )}
+                    {items.length === 0 ? (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>No items in this audit cycle.</div>
+                    ) : (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Asset</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Status</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Remarks</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Verified At</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'right' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map(item => (
+                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{getAssetDisplay(item.asset_id)}</td>
+                              <td style={{ padding: '12px 16px' }}>
+                                {item.verification_status ? (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '12px', background: 'var(--bg-element)', fontSize: '0.75rem', fontWeight: 600, color: getStatusColor(item.verification_status), border: `1px solid ${getStatusColor(item.verification_status)}33` }}>
+                                    {statusLabel(item.verification_status)}
+                                  </div>
+                                ) : (
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Not verified</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>{item.remarks || '—'}</td>
+                              <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>{item.verified_at ? new Date(item.verified_at).toLocaleDateString() : '—'}</td>
+                              <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                {!cycle.is_closed && !item.verification_status && (
+                                  <button onClick={() => { setModalError(''); setVerifyModalItem(item); }} className="btn btn-primary" style={{ padding: '4px 12px', minHeight: 0, fontSize: '0.75rem' }}>
+                                    Verify
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
       {/* ── Modals ── */}
-      <Modal 
-        isOpen={modalState.isOpen} 
-        onClose={closeModal} 
-        title={modalState.type === 'add' ? 'Verify Asset' : 'Edit Audit Record'}
-      >
-        <AuditForm 
-          initialData={modalState.data} 
-          assetsList={assetsList}
-          onSubmit={handleSubmit} 
-          onCancel={closeModal} 
-          submitting={submitting} 
+      <Modal isOpen={cycleModalOpen} onClose={() => setCycleModalOpen(false)} title="New Audit Cycle">
+        <CycleForm
+          departmentsList={departmentsList}
+          onSubmit={handleCreateCycle}
+          onCancel={() => setCycleModalOpen(false)}
+          submitting={submitting}
           error={modalError}
         />
+      </Modal>
+
+      <Modal isOpen={!!verifyModalItem} onClose={() => setVerifyModalItem(null)} title="Verify Asset">
+        {verifyModalItem && (
+          <VerifyForm
+            item={verifyModalItem}
+            assetsList={assetsList}
+            onSubmit={handleVerifyItem}
+            onCancel={() => setVerifyModalItem(null)}
+            submitting={submitting}
+            error={modalError}
+          />
+        )}
       </Modal>
     </div>
   );
