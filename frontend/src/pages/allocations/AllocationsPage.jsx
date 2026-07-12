@@ -47,8 +47,6 @@ function Modal({ isOpen, onClose, title, children }) {
 
 // ─────────────────────────────────────────────────────────────
 // Allocation Form — matches backend AllocationCreate
-// Fields: asset_id (int), user_id (int), notes (string)
-// allocated_by is auto-set by router from JWT
 // ─────────────────────────────────────────────────────────────
 function AllocationForm({ assetsList, usersList, onSubmit, onCancel, submitting, error }) {
   const [form, setForm] = useState({ asset_id: '', user_id: '', notes: '' });
@@ -72,21 +70,21 @@ function AllocationForm({ assetsList, usersList, onSubmit, onCancel, submitting,
       )}
       <div>
         <label className="form-label">Asset *</label>
-        <select className="form-input" required value={form.asset_id} onChange={e => setForm({...form, asset_id: e.target.value})}>
+        <select className="form-input" required value={form.asset_id} onChange={e => setForm({ ...form, asset_id: e.target.value })}>
           <option value="">Select Asset...</option>
-          {assetsList.map(a => <option key={a.id} value={a.id}>{a.asset_tag} — {a.name}</option>)}
+          {assetsList.filter(a => a.status === 'available').map(a => <option key={a.id} value={a.id}>{a.asset_tag} — {a.name}</option>)}
         </select>
       </div>
       <div>
         <label className="form-label">Assign To *</label>
-        <select className="form-input" required value={form.user_id} onChange={e => setForm({...form, user_id: e.target.value})}>
+        <select className="form-input" required value={form.user_id} onChange={e => setForm({ ...form, user_id: e.target.value })}>
           <option value="">Select User...</option>
           {usersList.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
         </select>
       </div>
       <div>
         <label className="form-label">Notes</label>
-        <input type="text" className="form-input" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="e.g. New Joining" />
+        <input type="text" className="form-input" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="e.g. New Joining" />
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>
@@ -120,7 +118,7 @@ export default function AllocationsPage() {
     async function fetchDropdowns() {
       try {
         const [assets, users] = await Promise.all([
-          assetService.getAssets({ status: 'available' }),
+          assetService.getAssets({}),
           organizationService.getUsers(),
         ]);
         setAssetsList(assets || []);
@@ -172,7 +170,7 @@ export default function AllocationsPage() {
       setModalOpen(false);
       fetchAllocations();
       // Refresh available assets
-      const assets = await assetService.getAssets({ status: 'available' });
+      const assets = await assetService.getAssets({});
       setAssetsList(assets || []);
     } catch (err) {
       setModalError(err.displayMessage || 'Failed to create allocation.');

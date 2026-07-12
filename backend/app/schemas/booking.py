@@ -1,16 +1,11 @@
-# TODO: Booking schemas (BookingCreate, BookingUpdate, BookingOut)
-
-
 from datetime import datetime
-
 from pydantic import BaseModel
-
 from app.models.booking import BookingStatus
 
 
 class BookingCreate(BaseModel):
     asset_id: int
-    user_id: int
+    user_id: int | None = None  # FIXED: Now optional for incoming requests
     status: BookingStatus
     start_date: datetime
     end_date: datetime

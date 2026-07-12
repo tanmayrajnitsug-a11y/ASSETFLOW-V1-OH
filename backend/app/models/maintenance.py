@@ -1,6 +1,3 @@
-# TODO: MaintenanceRequest model – workflow: Pending → Approved → Technician Assigned → In Progress → Resolved
-
-
 import enum
 from datetime import datetime
 

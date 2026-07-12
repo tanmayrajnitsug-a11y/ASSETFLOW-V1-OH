@@ -1,5 +1,3 @@
-# TODO: Booking model – time-slot reservation with overlap validation
-
 import enum
 from datetime import datetime
 

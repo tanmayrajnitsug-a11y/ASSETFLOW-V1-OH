@@ -11,9 +11,6 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
 
 class UserOut(BaseModel):
     id: int
@@ -28,6 +25,11 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
 
 class UserUpdate(BaseModel):
     name: str | None = None

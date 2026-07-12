@@ -28,17 +28,7 @@ const DUMMY_NOTIFICATIONS = [
 // HELPER — try real API, fall back to dummy on network/server error
 // ══════════════════════════════════════════════════════════════════
 async function tryApi(apiFn, fallbackFn) {
-  try {
-    return await apiFn();
-  } catch (err) {
-    // Only fall back for network errors or 5xx — not 4xx auth errors
-    const status = err.response?.status;
-    if (!status || status >= 500) {
-      console.warn('[AssetFlow] API unavailable — using fallback data.', err.displayMessage || err.message);
-      return fallbackFn();
-    }
-    throw err; // Re-throw 4xx so forms get proper error messages
-  }
+  return await apiFn();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -524,7 +514,7 @@ export const auditService = {
 export const notificationService = {
   getNotifications: async () => {
     return tryApi(
-      async () => { const { data } = await client.get('/notifications'); return Array.isArray(data) ? data : data.items ?? []; },
+      async () => { const { data } = await client.get('/notifications/'); return Array.isArray(data) ? data : data.items ?? []; },
       async () => { await delay(300); return [...DUMMY_NOTIFICATIONS]; }
     );
   },

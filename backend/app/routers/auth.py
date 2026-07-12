@@ -9,7 +9,7 @@ from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-@router.post("/signup", response_model=UserOut, status_code=201)
+@router.post("/signup", response_model=TokenResponse, status_code=201)
 async def signup_endpoint(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
     return await signup(payload, db)
 

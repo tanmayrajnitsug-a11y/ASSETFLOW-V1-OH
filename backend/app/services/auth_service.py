@@ -20,7 +20,10 @@ async def signup(payload: SignupRequest, db: AsyncSession) -> User:
     )
     db.add(user)
     await db.flush()
-    return user
+    token = create_access_token({"sub": str(user.id), "role": user.role.value})
+    from app.schemas.user import UserOut
+    user_out = UserOut.model_validate(user)
+    return TokenResponse(access_token=token, user=user_out)
 
 async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession) -> TokenResponse:
     result = await db.execute(select(User).where(User.email == form_data.username))
@@ -32,7 +35,9 @@ async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession) -> Token
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
 
     token = create_access_token({"sub": str(user.id), "role": user.role.value})
-    return TokenResponse(access_token=token)
+    from app.schemas.user import UserOut
+    user_out = UserOut.model_validate(user)
+    return TokenResponse(access_token=token, user=user_out)
 
 async def seed_admin(db: AsyncSession, email: str, password: str):
     result = await db.execute(select(User).where(User.email == email))

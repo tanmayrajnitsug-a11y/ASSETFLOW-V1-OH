@@ -47,8 +47,6 @@ function Modal({ isOpen, onClose, title, children }) {
 
 // ─────────────────────────────────────────────────────────────
 // Maintenance Form — matches backend MaintenanceCreate
-// Fields: asset_id (int), issue_description (str), priority (str)
-// reported_by is auto-set from JWT by the router
 // ─────────────────────────────────────────────────────────────
 function MaintenanceForm({ initialData, assetsList, onSubmit, onCancel, submitting, error, isEdit }) {
   const [form, setForm] = useState(initialData || {
@@ -84,7 +82,7 @@ function MaintenanceForm({ initialData, assetsList, onSubmit, onCancel, submitti
       {!isEdit && (
         <div>
           <label className="form-label">Asset *</label>
-          <select className="form-input" required value={form.asset_id} onChange={e => setForm({...form, asset_id: e.target.value})}>
+          <select className="form-input" required value={form.asset_id} onChange={e => setForm({ ...form, asset_id: e.target.value })}>
             <option value="">Select Asset...</option>
             {assetsList.map(a => <option key={a.id} value={a.id}>{a.asset_tag} — {a.name}</option>)}
           </select>
@@ -93,13 +91,13 @@ function MaintenanceForm({ initialData, assetsList, onSubmit, onCancel, submitti
 
       <div>
         <label className="form-label">Issue Description *</label>
-        <textarea className="form-input" required rows={3} value={form.issue_description} onChange={e => setForm({...form, issue_description: e.target.value})} placeholder="Describe the issue in detail..." style={{ resize: 'vertical' }} />
+        <textarea className="form-input" required rows={3} value={form.issue_description} onChange={e => setForm({ ...form, issue_description: e.target.value })} placeholder="Describe the issue in detail..." style={{ resize: 'vertical' }} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
           <label className="form-label">Priority *</label>
-          <select className="form-input" required value={form.priority} onChange={e => setForm({...form, priority: e.target.value})}>
+          <select className="form-input" required value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
@@ -109,7 +107,7 @@ function MaintenanceForm({ initialData, assetsList, onSubmit, onCancel, submitti
         {isEdit && (
           <div>
             <label className="form-label">Status</label>
-            <select className="form-input" required value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+            <select className="form-input" required value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="in_progress">In Progress</option>

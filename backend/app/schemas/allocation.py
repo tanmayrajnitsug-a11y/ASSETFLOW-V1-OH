@@ -1,8 +1,4 @@
-# TODO: Allocation schemas (AllocationCreate, AllocationReturn, AllocationOut) + Transfer schemas
-
-
 from datetime import datetime
-
 from pydantic import BaseModel
 
 from app.models.allocation import AllocationStatus
@@ -12,7 +8,7 @@ from app.models.transfer import TransferStatus
 class AllocationCreate(BaseModel):
     asset_id: int
     user_id: int
-    allocated_by: int
+    allocated_by: int | None = None  # FIXED: Now optional for incoming requests
     status: AllocationStatus
     returned_at: datetime | None = None
     notes: str | None = None
@@ -40,6 +36,7 @@ class AllocationOut(BaseModel):
     class Config:
         from_attributes = True
 
+
 class TransferCreate(BaseModel):
     asset_id: int
     from_user_id: int | None = None
@@ -47,7 +44,7 @@ class TransferCreate(BaseModel):
     from_department_id: int | None = None
     to_department_id: int | None = None
     status: TransferStatus
-    requested_by: int
+    requested_by: int | None = None  # FIXED: Now optional for incoming requests
     approved_by: int | None = None
     completed_at: datetime | None = None
     reason: str | None = None

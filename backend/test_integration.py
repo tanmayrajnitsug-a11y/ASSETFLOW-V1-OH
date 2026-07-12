@@ -32,7 +32,7 @@ async def main():
         }), [200, 201, 400])  # 400 if user exists
 
         r = check("Login", await c.post(f"{BASE}/auth/login", data={
-            "username": "admin@assetflow.com", "password": "Admin@1234"
+            "username": "admin@assetflow.io", "password": "admin123"
         }, headers={"Content-Type": "application/x-www-form-urlencoded"}))
         token = r.json().get("access_token", "")
         headers = {"Authorization": f"Bearer {token}"}
@@ -120,7 +120,7 @@ async def main():
         check("List Maintenance", await c.get(f"{BASE}/maintenance/", headers=headers))
         check("Update Maintenance", await c.patch(
             f"{BASE}/maintenance/{maint_id}",
-            params={"new_status": "approved"},
+            json={"status": "approved"},
             headers=headers
         ))
 

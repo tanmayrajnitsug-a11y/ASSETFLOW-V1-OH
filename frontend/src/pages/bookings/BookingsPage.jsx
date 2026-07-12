@@ -47,8 +47,6 @@ function Modal({ isOpen, onClose, title, children }) {
 
 // ─────────────────────────────────────────────────────────────
 // Booking Form — matches backend BookingCreate
-// Fields: asset_id (int), start_date (datetime), end_date (datetime), purpose (str)
-// user_id is auto-set from JWT by the router
 // ─────────────────────────────────────────────────────────────
 function BookingForm({ assetsList, onSubmit, onCancel, submitting, error }) {
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -81,7 +79,7 @@ function BookingForm({ assetsList, onSubmit, onCancel, submitting, error }) {
       )}
       <div>
         <label className="form-label">Asset *</label>
-        <select className="form-input" required value={form.asset_id} onChange={e => setForm({...form, asset_id: e.target.value})}>
+        <select className="form-input" required value={form.asset_id} onChange={e => setForm({ ...form, asset_id: e.target.value })}>
           <option value="">Select Asset...</option>
           {assetsList.map(a => <option key={a.id} value={a.id}>{a.asset_tag} — {a.name}</option>)}
         </select>
@@ -89,16 +87,16 @@ function BookingForm({ assetsList, onSubmit, onCancel, submitting, error }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
           <label className="form-label">Start Date *</label>
-          <input type="date" className="form-input" required value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})} />
+          <input type="date" className="form-input" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
         </div>
         <div>
           <label className="form-label">End Date *</label>
-          <input type="date" className="form-input" required value={form.end_date} onChange={e => setForm({...form, end_date: e.target.value})} />
+          <input type="date" className="form-input" required value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
         </div>
       </div>
       <div>
         <label className="form-label">Purpose</label>
-        <input type="text" className="form-input" value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} placeholder="e.g. Client Presentation" />
+        <input type="text" className="form-input" value={form.purpose} onChange={e => setForm({ ...form, purpose: e.target.value })} placeholder="e.g. Client Presentation" />
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={submitting}>Cancel</button>

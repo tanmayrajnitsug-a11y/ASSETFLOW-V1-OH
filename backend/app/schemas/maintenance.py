@@ -1,16 +1,11 @@
-# TODO: Maintenance schemas (MaintenanceCreate, MaintenanceDecision, MaintenanceResolve, MaintenanceOut)
-
-
 from datetime import datetime
-
 from pydantic import BaseModel
-
 from app.models.maintenance import MaintenanceStatus
 
 
 class MaintenanceCreate(BaseModel):
     asset_id: int
-    reported_by: int
+    reported_by: int | None = None  # FIXED: Now optional for incoming requests
     issue_description: str
     priority: str
     photo_url: str | None = None
