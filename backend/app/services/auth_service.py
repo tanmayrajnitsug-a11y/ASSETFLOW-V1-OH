@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from app.models.user import User, UserRole
 from app.schemas.user import SignupRequest, LoginRequest, TokenResponse
 from app.security import hash_password, verify_password, create_access_token
+from fastapi.security import OAuth2PasswordRequestForm
 
 async def signup(payload: SignupRequest, db: AsyncSession) -> User:
     existing = await db.execute(select(User).where(User.email == payload.email))
@@ -21,11 +22,11 @@ async def signup(payload: SignupRequest, db: AsyncSession) -> User:
     await db.flush()
     return user
 
-async def login(payload: LoginRequest, db: AsyncSession) -> TokenResponse:
-    result = await db.execute(select(User).where(User.email == payload.email))
+async def login(form_data: OAuth2PasswordRequestForm, db: AsyncSession) -> TokenResponse:
+    result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(payload.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
