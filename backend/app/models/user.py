@@ -20,7 +20,7 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.EMPLOYEE)
-    department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"), nullable=True)
+    # department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
