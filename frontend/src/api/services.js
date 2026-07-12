@@ -261,17 +261,21 @@ export const assetService = {
       },
       async () => {
         await delay(500);
-        let assets = [...DUMMY_ASSETS];
+        let assets = [
+          { id: 1, tag: 'AF-0012', name: 'Dell Laptop', category: 'Electronics', department: 'Engineering', location: 'HQ Floor 2', status: 'Available' },
+          { id: 2, tag: 'AF-0013', name: 'MacBook Pro', category: 'Electronics', department: 'Design', location: 'HQ Floor 3', status: 'Allocated' }
+        ];
         if (filters.search) {
           const q = filters.search.toLowerCase();
           assets = assets.filter((a) =>
             a.name.toLowerCase().includes(q) ||
-            a.id.toLowerCase().includes(q) ||
+            a.tag.toLowerCase().includes(q) ||
             a.category.toLowerCase().includes(q)
           );
         }
         if (filters.status)   assets = assets.filter((a) => a.status   === filters.status);
         if (filters.category) assets = assets.filter((a) => a.category === filters.category);
+        if (filters.department) assets = assets.filter((a) => a.department === filters.department);
         return { data: assets, total: assets.length };
       }
     );
@@ -280,14 +284,17 @@ export const assetService = {
   getAssetById: async (id) => {
     return tryApi(
       async () => { const { data } = await client.get(`/assets/${id}`); return data; },
-      async () => { await delay(300); return DUMMY_ASSETS.find((a) => a.id === id) || null; }
+      async () => { 
+        await delay(300); 
+        return { id: 1, tag: 'AF-0012', name: 'Dell Laptop', category: 'Electronics', department: 'Engineering', location: 'HQ Floor 2', status: 'Available' };
+      }
     );
   },
 
   createAsset: async (payload) => {
     return tryApi(
       async () => { const { data } = await client.post('/assets', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `AF-${String(DUMMY_ASSETS.length + 1).padStart(4, '0')}` }; }
+      async () => { await delay(600); return { ...payload, id: Date.now(), tag: `AF-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` }; }
     );
   },
 
@@ -391,10 +398,27 @@ export const organizationService = {
 // ALLOCATION SERVICES
 // ══════════════════════════════════════════════════════════════════
 export const allocationService = {
-  getAllocations: async () => {
+  getAllocations: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/allocations'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_ALLOCATIONS]; }
+      async () => { const { data } = await client.get('/allocations', { params: filters }); return Array.isArray(data) ? data : data.items ?? []; },
+      async () => {
+        await delay(450);
+        let allocations = [
+          { id: 1, asset: 'Dell Laptop', asset_tag: 'AF-0012', employee: 'Alex Morgan', department: 'Engineering', allocated_date: '2026-07-12', status: 'Allocated', reason: 'New Joining' },
+          { id: 2, asset: 'MacBook Pro', asset_tag: 'AF-0013', employee: 'Priya Shah', department: 'Design', allocated_date: '2026-07-10', status: 'Returned', reason: 'Upgrade' }
+        ];
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          allocations = allocations.filter((a) =>
+            a.asset.toLowerCase().includes(q) ||
+            a.asset_tag.toLowerCase().includes(q) ||
+            a.employee.toLowerCase().includes(q)
+          );
+        }
+        if (filters.department) allocations = allocations.filter((a) => a.department === filters.department);
+        if (filters.status) allocations = allocations.filter((a) => a.status === filters.status);
+        return allocations;
+      }
     );
   },
   createAllocation: async (payload) => {
@@ -415,19 +439,42 @@ export const allocationService = {
 // BOOKING SERVICES
 // ══════════════════════════════════════════════════════════════════
 export const bookingService = {
-  getBookings: async () => {
+  getBookings: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/bookings'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_BOOKINGS]; }
+      async () => { const { data } = await client.get('/bookings', { params: filters }); return Array.isArray(data) ? data : data.items ?? []; },
+      async () => {
+        await delay(450);
+        let bookings = [
+          { id: 1, asset: 'Projector Unit 1', employee: 'Alex Morgan', booking_date: '2026-07-15', start_time: '10:00', end_time: '11:00', purpose: 'Presentation', status: 'Approved' },
+          { id: 2, asset: 'Conference Room B', employee: 'Meera Nair', booking_date: '2026-07-16', start_time: '09:00', end_time: '10:30', purpose: 'Design Sync', status: 'Pending' }
+        ];
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          bookings = bookings.filter((b) =>
+            b.asset.toLowerCase().includes(q) ||
+            b.employee.toLowerCase().includes(q) ||
+            b.purpose.toLowerCase().includes(q)
+          );
+        }
+        if (filters.booking_date) bookings = bookings.filter((b) => b.booking_date === filters.booking_date);
+        if (filters.status) bookings = bookings.filter((b) => b.status === filters.status);
+        return bookings;
+      }
     );
   },
   createBooking: async (payload) => {
     return tryApi(
       async () => { const { data } = await client.post('/bookings', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `BK-${String(DUMMY_BOOKINGS.length + 1).padStart(3, '0')}`, status: 'Pending' }; }
+      async () => { await delay(600); return { ...payload, id: Date.now(), status: payload.status || 'Pending' }; }
     );
   },
-  cancelBooking: async (id) => {
+  updateBooking: async (id, payload) => {
+    return tryApi(
+      async () => { const { data } = await client.put(`/bookings/${id}`, payload); return data; },
+      async () => { await delay(400); return { id, ...payload }; }
+    );
+  },
+  deleteBooking: async (id) => {
     return tryApi(
       async () => { await client.delete(`/bookings/${id}`); return { success: true }; },
       async () => { await delay(300); return { success: true }; }
@@ -439,22 +486,46 @@ export const bookingService = {
 // MAINTENANCE SERVICES
 // ══════════════════════════════════════════════════════════════════
 export const maintenanceService = {
-  getTickets: async () => {
+  getTickets: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/maintenance'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_MAINTENANCE]; }
+      async () => { const { data } = await client.get('/maintenance', { params: filters }); return Array.isArray(data) ? data : data.items ?? []; },
+      async () => {
+        await delay(450);
+        let tickets = [
+          { id: 1, asset: 'Dell Laptop', title: 'Laptop not starting', description: 'Black screen after power on.', priority: 'High', status: 'Pending', assigned_to: 'IT Support', created_at: '2026-07-12' },
+          { id: 2, asset: 'Canon Projector', title: 'Lamp replacement needed', description: 'Projector lamp is completely burnt out.', priority: 'Medium', status: 'In Progress', assigned_to: 'Tech Team', created_at: '2026-07-10' },
+          { id: 3, asset: 'UPS Battery', title: 'Annual Inspection', description: 'Regular battery inspection and testing.', priority: 'Low', status: 'Resolved', assigned_to: 'Suresh Patel', created_at: '2026-07-05' }
+        ];
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          tickets = tickets.filter((t) =>
+            t.asset.toLowerCase().includes(q) ||
+            t.title.toLowerCase().includes(q) ||
+            t.description.toLowerCase().includes(q)
+          );
+        }
+        if (filters.status) tickets = tickets.filter((t) => t.status === filters.status);
+        if (filters.priority) tickets = tickets.filter((t) => t.priority === filters.priority);
+        return tickets;
+      }
     );
   },
   createTicket: async (payload) => {
     return tryApi(
       async () => { const { data } = await client.post('/maintenance', payload); return data; },
-      async () => { await delay(600); return { ...payload, id: `MN-${String(DUMMY_MAINTENANCE.length + 1).padStart(4, '0')}`, status: 'Pending' }; }
+      async () => { await delay(600); return { ...payload, id: Date.now(), status: payload.status || 'Pending' }; }
     );
   },
-  updateTicketStatus: async (id, status) => {
+  updateTicket: async (id, payload) => {
     return tryApi(
-      async () => { const { data } = await client.patch(`/maintenance/${id}`, { status }); return data; },
-      async () => { await delay(300); return { id, status }; }
+      async () => { const { data } = await client.put(`/maintenance/${id}`, payload); return data; },
+      async () => { await delay(300); return { id, ...payload }; }
+    );
+  },
+  deleteTicket: async (id) => {
+    return tryApi(
+      async () => { await client.delete(`/maintenance/${id}`); return { success: true }; },
+      async () => { await delay(300); return { success: true }; }
     );
   },
 };
@@ -463,18 +534,47 @@ export const maintenanceService = {
 // AUDIT SERVICES
 // ══════════════════════════════════════════════════════════════════
 export const auditService = {
-  getAuditLogs: async () => {
+  getAudits: async (filters = {}) => {
     return tryApi(
-      async () => { const { data } = await client.get('/audit'); return Array.isArray(data) ? data : data.items ?? []; },
-      async () => { await delay(450); return [...DUMMY_AUDIT_LOGS]; }
+      async () => { const { data } = await client.get('/audits', { params: filters }); return Array.isArray(data) ? data : data.items ?? []; },
+      async () => { 
+        await delay(450); 
+        let audits = [
+          { id: 1, audit_name: 'Quarterly Audit Q3', asset: 'Dell Laptop', asset_tag: 'AF-0012', department: 'Engineering', expected_location: 'HQ Floor 2', verification_status: 'Found', remarks: 'Verified successfully', verified_by: 'Admin', verified_at: '2026-07-12' },
+          { id: 2, audit_name: 'Quarterly Audit Q3', asset: 'MacBook Pro', asset_tag: 'AF-0013', department: 'Design', expected_location: 'HQ Floor 3', verification_status: 'Missing', remarks: 'Not found at desk', verified_by: 'Admin', verified_at: '2026-07-12' }
+        ];
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          audits = audits.filter((a) =>
+            a.audit_name.toLowerCase().includes(q) ||
+            a.asset.toLowerCase().includes(q) ||
+            a.asset_tag.toLowerCase().includes(q)
+          );
+        }
+        if (filters.department) audits = audits.filter((a) => a.department === filters.department);
+        if (filters.verification_status) audits = audits.filter((a) => a.verification_status === filters.verification_status);
+        return audits;
+      }
     );
   },
-  runAuditCheck: async () => {
+  createAudit: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/audit/run'); return data; },
-      async () => { await delay(1200); return { flagged: 2, verified: 4, message: '2 assets flagged — discrepancy report generated.' }; }
+      async () => { const { data } = await client.post('/audits', payload); return data; },
+      async () => { await delay(600); return { ...payload, id: Date.now(), verified_by: 'Admin', verified_at: new Date().toISOString().split('T')[0] }; }
     );
   },
+  updateAudit: async (id, payload) => {
+    return tryApi(
+      async () => { const { data } = await client.put(`/audits/${id}`, payload); return data; },
+      async () => { await delay(300); return { id, ...payload, verified_by: 'Admin', verified_at: new Date().toISOString().split('T')[0] }; }
+    );
+  },
+  deleteAudit: async (id) => {
+    return tryApi(
+      async () => { await client.delete(`/audits/${id}`); return { success: true }; },
+      async () => { await delay(300); return { success: true }; }
+    );
+  }
 };
 
 // ══════════════════════════════════════════════════════════════════
