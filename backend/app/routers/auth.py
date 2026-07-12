@@ -13,9 +13,11 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
 async def signup_endpoint(payload: SignupRequest, db: AsyncSession = Depends(get_db)):
     return await signup(payload, db)
 
+from fastapi.security import OAuth2PasswordRequestForm
+
 @router.post("/login", response_model=TokenResponse)
-async def login_endpoint(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
-    return await login(payload, db)
+async def login_endpoint(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    return await login(form_data, db)
 
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)):
