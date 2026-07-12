@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.schemas.user import UserOut, UserUpdate, RoleAssignment
-from app.security import get_current_user, require_roles
+from app.schemas.user import UserOut, UserUpdate, RoleAssignment, UserCreate
+from app.security import get_current_user, require_roles, pwd_context
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -67,3 +67,36 @@ async def assign_role(
     await db.commit()
     await db.refresh(user)
     return user
+
+@router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    user_in: UserCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN))
+):
+    # Set a default password for employees created by admin (they can change it later)
+    hashed_pw = pwd_context.hash("Welcome123!")
+    new_user = User(
+        name=user_in.name,
+        email=user_in.email,
+        department_id=user_in.department_id,
+        role=user_in.role,
+        hashed_password=hashed_pw
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    return new_user
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN))
+):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    await db.delete(user)
+    await db.commit()

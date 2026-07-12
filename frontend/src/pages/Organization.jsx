@@ -82,7 +82,7 @@ function DepartmentForm({ initialData, onSubmit, onCancel, submitting, error }) 
 }
 
 function EmployeeForm({ initialData, departments, onSubmit, onCancel, submitting, error }) {
-  const [form, setForm] = useState(initialData || { name: '', email: '', department: '' });
+  const [form, setForm] = useState(initialData || { name: '', email: '', department_id: '' });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -106,9 +106,9 @@ function EmployeeForm({ initialData, departments, onSubmit, onCancel, submitting
       </div>
       <div>
         <label className="form-label">Department</label>
-        <select className="form-input" required value={form.department} onChange={e => setForm({...form, department: e.target.value})}>
+        <select className="form-input" required value={form.department_id || ''} onChange={e => setForm({...form, department_id: Number(e.target.value)})}>
           <option value="">Select a department...</option>
-          {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
@@ -148,8 +148,16 @@ export default function OrganizationPage() {
         organizationService.getDepartments(),
         organizationService.getEmployees()
       ]);
-      setDepartments(deptRes);
-      setEmployees(empRes);
+      const mappedEmps = empRes.map(emp => {
+        const dept = deptRes.find(d => d.id === emp.department_id);
+        return { ...emp, department: dept ? dept.name : 'Unassigned' };
+      });
+      const mappedDepts = deptRes.map(dept => {
+        const headUser = empRes.find(u => u.id === dept.head_id);
+        return { ...dept, head: headUser ? headUser.name : 'Unassigned' };
+      });
+      setDepartments(mappedDepts);
+      setEmployees(mappedEmps);
     } catch (err) {
       setPageError('Unable to load organization data. Please try again later.');
     } finally {

@@ -351,7 +351,7 @@ export const organizationService = {
   getEmployees: async (filters = {}) => {
     return tryApi(
       async () => {
-        const { data } = await client.get('/employees', { params: filters });
+        const { data } = await client.get('/users', { params: filters });
         return Array.isArray(data) ? data : data.items ?? [];
       },
       async () => {
@@ -367,21 +367,21 @@ export const organizationService = {
 
   createEmployee: async (payload) => {
     return tryApi(
-      async () => { const { data } = await client.post('/employees', payload); return data; },
+      async () => { const { data } = await client.post('/users', payload); return data; },
       async () => { await delay(500); return { ...payload, id: Date.now(), status: 'Active' }; }
     );
   },
 
   updateEmployee: async (id, payload) => {
     return tryApi(
-      async () => { const { data } = await client.put(`/employees/${id}`, payload); return data; },
+      async () => { const { data } = await client.put(`/users/${id}`, payload); return data; },
       async () => { await delay(400); return { id, ...payload }; }
     );
   },
 
   deleteEmployee: async (id) => {
     return tryApi(
-      async () => { await client.delete(`/employees/${id}`); return { success: true }; },
+      async () => { await client.delete(`/users/${id}`); return { success: true }; },
       async () => { await delay(300); return { success: true }; }
     );
   },
