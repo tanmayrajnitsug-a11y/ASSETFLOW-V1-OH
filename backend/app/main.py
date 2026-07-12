@@ -1,30 +1,40 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
 from app.routers import (
+    allocations,
+    assets,
+    audits,
     auth,
-    users,
-    departments,
+    bookings,
     categories,
+    departments,
+    maintenance,
     notifications,
     reports,
+    users,
 )
 
+
 settings = get_settings()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     yield
 
+
 app = FastAPI(
     title="AssetFlow API",
     version="0.1.0",
     lifespan=lifespan,
 )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,12 +44,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.include_router(auth.router)
 app.include_router(users.router, prefix="/api")
 app.include_router(departments.router, prefix="/api")
 app.include_router(categories.router, prefix="/api")
+app.include_router(assets.router, prefix="/api")
+app.include_router(allocations.router, prefix="/api")
+app.include_router(bookings.router, prefix="/api")
+app.include_router(maintenance.router, prefix="/api")
+app.include_router(audits.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+
 
 @app.get("/health")
 async def health_check():
