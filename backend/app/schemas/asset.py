@@ -9,7 +9,7 @@ from app.models.asset import AssetStatus
 
 class AssetCreate(BaseModel):
     name: str
-    asset_tag: str | None = None
+    asset_tag: str
     description: str | None = None
     category_id: int
     department_id: int | None = None

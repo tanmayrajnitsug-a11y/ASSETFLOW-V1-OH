@@ -6,7 +6,6 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.models.allocation import AllocationStatus
-from app.models.transfer import TransferStatus
 
 
 class AllocationCreate(BaseModel):
