@@ -1,14 +1,17 @@
 from datetime import datetime
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.models.allocation import Allocation, AllocationStatus
 from app.models.asset import Asset, AssetStatus
 from app.models.transfer import Transfer, TransferStatus
 from app.schemas.allocation import AllocationCreate, AllocationUpdate, TransferCreate, TransferUpdate
 
-def allocate_asset(db: Session, allocation_in: AllocationCreate) -> Allocation:
-    asset = db.query(Asset).filter(Asset.id == allocation_in.asset_id).first()
+async def allocate_asset(db: AsyncSession, allocation_in: AllocationCreate) -> Allocation:
+    result = await db.execute(select(Asset).filter(Asset.id == allocation_in.asset_id))
+    asset = result.scalar_one_or_none()
+    
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
         
@@ -28,20 +31,25 @@ def allocate_asset(db: Session, allocation_in: AllocationCreate) -> Allocation:
     # Update asset status
     asset.status = AssetStatus.ALLOCATED
     
-    db.commit()
-    db.refresh(db_allocation)
+    await db.commit()
+    await db.refresh(db_allocation)
     return db_allocation
 
-def get_allocations(db: Session, skip: int = 0, limit: int = 100, user_id: int = None, asset_id: int = None) -> list[Allocation]:
-    query = db.query(Allocation)
+async def get_allocations(db: AsyncSession, skip: int = 0, limit: int = 100, user_id: int = None, asset_id: int = None) -> list[Allocation]:
+    stmt = select(Allocation)
     if user_id:
-        query = query.filter(Allocation.user_id == user_id)
+        stmt = stmt.filter(Allocation.user_id == user_id)
     if asset_id:
-        query = query.filter(Allocation.asset_id == asset_id)
-    return query.offset(skip).limit(limit).all()
+        stmt = stmt.filter(Allocation.asset_id == asset_id)
+        
+    stmt = stmt.offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
-def return_asset(db: Session, allocation_id: int) -> Allocation:
-    allocation = db.query(Allocation).filter(Allocation.id == allocation_id).first()
+async def return_asset(db: AsyncSession, allocation_id: int) -> Allocation:
+    result = await db.execute(select(Allocation).filter(Allocation.id == allocation_id))
+    allocation = result.scalar_one_or_none()
+    
     if not allocation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Allocation not found")
         
@@ -51,17 +59,19 @@ def return_asset(db: Session, allocation_id: int) -> Allocation:
     allocation.status = AllocationStatus.RETURNED
     allocation.returned_at = datetime.now()
 
-    asset = db.query(Asset).filter(Asset.id == allocation.asset_id).first()
+    result = await db.execute(select(Asset).filter(Asset.id == allocation.asset_id))
+    asset = result.scalar_one_or_none()
     if asset:
         asset.status = AssetStatus.AVAILABLE
 
-    db.commit()
-    db.refresh(allocation)
+    await db.commit()
+    await db.refresh(allocation)
     return allocation
 
-def create_transfer(db: Session, transfer_in: TransferCreate) -> Transfer:
+async def create_transfer(db: AsyncSession, transfer_in: TransferCreate) -> Transfer:
     # A transfer requests moving an asset to a new user
-    asset = db.query(Asset).filter(Asset.id == transfer_in.asset_id).first()
+    result = await db.execute(select(Asset).filter(Asset.id == transfer_in.asset_id))
+    asset = result.scalar_one_or_none()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
         
@@ -76,18 +86,22 @@ def create_transfer(db: Session, transfer_in: TransferCreate) -> Transfer:
         reason=transfer_in.reason
     )
     db.add(db_transfer)
-    db.commit()
-    db.refresh(db_transfer)
+    await db.commit()
+    await db.refresh(db_transfer)
     return db_transfer
 
-def get_transfers(db: Session, skip: int = 0, limit: int = 100, status_filter: TransferStatus = None) -> list[Transfer]:
-    query = db.query(Transfer)
+async def get_transfers(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: TransferStatus = None) -> list[Transfer]:
+    stmt = select(Transfer)
     if status_filter:
-        query = query.filter(Transfer.status == status_filter)
-    return query.offset(skip).limit(limit).all()
+        stmt = stmt.filter(Transfer.status == status_filter)
+    stmt = stmt.offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
-def approve_transfer(db: Session, transfer_id: int, approver_id: int) -> Transfer:
-    transfer = db.query(Transfer).filter(Transfer.id == transfer_id).first()
+async def approve_transfer(db: AsyncSession, transfer_id: int, approver_id: int) -> Transfer:
+    result = await db.execute(select(Transfer).filter(Transfer.id == transfer_id))
+    transfer = result.scalar_one_or_none()
+    
     if not transfer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transfer not found")
         
@@ -96,12 +110,14 @@ def approve_transfer(db: Session, transfer_id: int, approver_id: int) -> Transfe
         
     transfer.status = TransferStatus.APPROVED
     transfer.approved_by = approver_id
-    db.commit()
-    db.refresh(transfer)
+    await db.commit()
+    await db.refresh(transfer)
     return transfer
     
-def complete_transfer(db: Session, transfer_id: int) -> Transfer:
-    transfer = db.query(Transfer).filter(Transfer.id == transfer_id).first()
+async def complete_transfer(db: AsyncSession, transfer_id: int) -> Transfer:
+    result = await db.execute(select(Transfer).filter(Transfer.id == transfer_id))
+    transfer = result.scalar_one_or_none()
+    
     if not transfer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transfer not found")
         
@@ -113,11 +129,12 @@ def complete_transfer(db: Session, transfer_id: int) -> Transfer:
     
     # 1. Close existing allocation if there is one
     if transfer.from_user_id:
-        existing_alloc = db.query(Allocation).filter(
+        existing_result = await db.execute(select(Allocation).filter(
             Allocation.asset_id == transfer.asset_id,
             Allocation.user_id == transfer.from_user_id,
             Allocation.status == AllocationStatus.ACTIVE
-        ).first()
+        ))
+        existing_alloc = existing_result.scalar_one_or_none()
         if existing_alloc:
             existing_alloc.status = AllocationStatus.RETURNED
             existing_alloc.returned_at = datetime.now()
@@ -133,10 +150,11 @@ def complete_transfer(db: Session, transfer_id: int) -> Transfer:
     db.add(new_alloc)
     
     # 3. Ensure asset status is allocated
-    asset = db.query(Asset).filter(Asset.id == transfer.asset_id).first()
+    asset_result = await db.execute(select(Asset).filter(Asset.id == transfer.asset_id))
+    asset = asset_result.scalar_one_or_none()
     if asset:
         asset.status = AssetStatus.ALLOCATED
         
-    db.commit()
-    db.refresh(transfer)
+    await db.commit()
+    await db.refresh(transfer)
     return transfer

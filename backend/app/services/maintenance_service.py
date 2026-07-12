@@ -1,13 +1,15 @@
 from datetime import datetime
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.models.maintenance import MaintenanceRequest, MaintenanceStatus
 from app.models.asset import Asset, AssetStatus
 from app.schemas.maintenance import MaintenanceCreate, MaintenanceUpdate
 
-def create_maintenance_request(db: Session, request_in: MaintenanceCreate) -> MaintenanceRequest:
-    asset = db.query(Asset).filter(Asset.id == request_in.asset_id).first()
+async def create_maintenance_request(db: AsyncSession, request_in: MaintenanceCreate) -> MaintenanceRequest:
+    result = await db.execute(select(Asset).filter(Asset.id == request_in.asset_id))
+    asset = result.scalar_one_or_none()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
@@ -20,25 +22,29 @@ def create_maintenance_request(db: Session, request_in: MaintenanceCreate) -> Ma
         status=MaintenanceStatus.PENDING
     )
     db.add(db_request)
-    db.commit()
-    db.refresh(db_request)
+    await db.commit()
+    await db.refresh(db_request)
     return db_request
 
-def get_maintenance_requests(db: Session, skip: int = 0, limit: int = 100, asset_id: int = None, status_filter: MaintenanceStatus = None) -> list[MaintenanceRequest]:
-    query = db.query(MaintenanceRequest)
+async def get_maintenance_requests(db: AsyncSession, skip: int = 0, limit: int = 100, asset_id: int = None, status_filter: MaintenanceStatus = None) -> list[MaintenanceRequest]:
+    stmt = select(MaintenanceRequest)
     if asset_id:
-        query = query.filter(MaintenanceRequest.asset_id == asset_id)
+        stmt = stmt.filter(MaintenanceRequest.asset_id == asset_id)
     if status_filter:
-        query = query.filter(MaintenanceRequest.status == status_filter)
+        stmt = stmt.filter(MaintenanceRequest.status == status_filter)
         
-    return query.offset(skip).limit(limit).all()
+    stmt = stmt.offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
-def update_maintenance_status(db: Session, request_id: int, request_in: MaintenanceUpdate, updater_id: int) -> MaintenanceRequest:
-    request = db.query(MaintenanceRequest).filter(MaintenanceRequest.id == request_id).first()
+async def update_maintenance_status(db: AsyncSession, request_id: int, request_in: MaintenanceUpdate, updater_id: int) -> MaintenanceRequest:
+    result = await db.execute(select(MaintenanceRequest).filter(MaintenanceRequest.id == request_id))
+    request = result.scalar_one_or_none()
     if not request:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Maintenance request not found")
 
-    asset = db.query(Asset).filter(Asset.id == request.asset_id).first()
+    asset_result = await db.execute(select(Asset).filter(Asset.id == request.asset_id))
+    asset = asset_result.scalar_one_or_none()
 
     update_data = request_in.model_dump(exclude_unset=True)
     
@@ -57,6 +63,6 @@ def update_maintenance_status(db: Session, request_id: int, request_in: Maintena
     for field, value in update_data.items():
         setattr(request, field, value)
 
-    db.commit()
-    db.refresh(request)
+    await db.commit()
+    await db.refresh(request)
     return request
